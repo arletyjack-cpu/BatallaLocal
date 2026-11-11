@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Batalla local</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main class="game has-text-black" id="juego">
+  <!-- HEADER -->
+  <header class="top is-flex is-justify-content-space-between is-align-items-center" id="encabezado">
+    <span class="title is-4 has-text-white mb-0">Batalla local</span>
+    <button class="button pause" id="botonPausa" aria-label="Pausa">❚❚</button>
+  </header>
+
+  <!-- BATTLE ARENA -->
+  <section class="arena" id="arena">
+    <!-- BATTLE HUD -->
+    <div class="hud" id="informacionBatalla">
+      <!-- PLAYER 1 -->
+      <div class="life life-player1" id="estadoJugador1">
+        <div class="health-bar">
+          <progress class="progress is-success" id="barraVidaJugador1" value="50" max="150"></progress>
+          <div class="health-label">
+            <span>Vida</span><span id="vidaJugador1">50 / 150</span>
+          </div>
+        </div>
+        <div class="tag turn-tag" id="turnoJugador1">Jugador 1 / Tu turno</div>
+      </div>
+
+      <!-- ROUND -->
+      <div class="round has-text-centered" id="ronda">
+        <small id="ventajaElemental">Agua x1.5 / Fuego x0.5</small>
+        <span class="has-text-weight-bold" id="numeroRonda">Ronda 2</span>
+      </div>
+
+      <!-- PLAYER 2 -->
+      <div class="life life-player2" id="estadoJugador2">
+        <div class="health-bar">
+          <progress class="progress is-success" id="barraVidaJugador2" value="100" max="150"></progress>
+          <div class="health-label">
+            <span>Vida</span><span id="vidaJugador2">100 / 150</span>
+          </div>
+        </div>
+        <div class="tag turn-tag" id="turnoJugador2">Jugador 2</div>
+      </div>
+    </div>
+
+    <!-- CHARACTERS -->
+    <img class="cat enemy-cat" id="imagenEnemigo" src="images/GatoTonto.webp" alt="Gato Tonto">
+    <img class="cat player-cat" id="imagenJugador" src="images/GatoBobo.webp" alt="Gato Bobo">
+
+    <!-- ENEMY CARD -->
+    <article class="card character-card enemigo" id="tarjetaEnemigo">
+      <div class="card-content">
+        <div class="is-flex is-justify-content-space-between is-align-items-center">
+          <span id="nivelEnemigo">Nv 11</span>
+          <strong id="nombreEnemigo">Gato Tonto</strong>
+        </div>
+        <div class="is-flex is-justify-content-space-between character-types" id="tiposEnemigo">
+          <span class="tag" id="tipoEnemigo1">Hibrido</span>
+          <span class="tag" id="tipoEnemigo2">Volador</span>
+        </div>
+        <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
+          <span id="indicadoresEnemigo">🟢🔘⭕</span>
+          <span id="propietarioEnemigo">Jugador 2</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- PLAYER CARD -->
+    <article class="card character-card jugador" id="tarjetaJugador">
+      <div class="card-content">
+        <div class="is-flex is-justify-content-space-between is-align-items-center">
+          <strong id="nombreJugador">Gato Bobo</strong>
+          <span id="nivelJugador">Nv 10</span>
+        </div>
+        <div class="is-flex is-justify-content-space-between character-types" id="tiposJugador">
+          <span class="tag" id="tipoJugador1">Caotico</span>
+          <span class="tag" id="tipoJugador2">Suerte</span>
+        </div>
+        <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
+          <span id="propietarioJugador">Jugador 1</span>
+          <span id="indicadoresJugador">🟢🔘⭕</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ACTION MENU -->
+  <section class="menu" id="menuAcciones">
+    <div class="columns is-mobile is-variable is-1 action-layout">
+      <!-- MESSAGE -->
+      <div class="column is-7">
+        <div class="box msg has-text-black" id="mensajeAccion">
+          <span id="turnoActual"><span class= "has-text-weight-bold">Jugador 1</span> • Elige una opción/acción.</span>
+          <p id="preguntaAccion">¿Qué quieres que haga Gato Bobo?</p>
+          <span id="instruccionesAccion">(Flechas, Enter para elegir, o toca un botón)</span>
+        </div>
+      </div>
+
+      <!-- BUTTON GRID -->
+      <div class="column is-5">
+        <div class="btns" id="botonesAccion">
+          <button class="button b pelear" id="botonPelear"><span>⚔ Pelear</span><span class="k">1</span></button>
+          <button class="button b pers" id="botonPersonajes"><span>👥 Personajes</span><span class="k">2</span></button>
+          <button class="button b moch" id="botonMochila"><span>🎒 Mochila</span><span class="k">3</span></button>
+          <button class="button b huir" id="botonHuir"><span>🏃 Huir</span><span class="k">4</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+<script src="js/main.js"></script>
+</html>
