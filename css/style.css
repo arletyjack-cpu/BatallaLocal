@@ -15,7 +15,7 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  padding: clamp(8px, 2vw, 24px);
+  padding: clamp(4px, 0.5vw, 24px);
 
   display: flex;
   justify-content: center;
@@ -28,7 +28,7 @@ body {
 
 .game {
   width: 100%;
-  max-width: 768px;
+  max-width: 1280px;
   min-width: 0;
 }
 
@@ -64,7 +64,7 @@ body {
 .arena {
   position: relative;
   width: 100%;
-  aspect-ratio: 760 / 488;
+  aspect-ratio: 16 / 10;
 
   overflow: hidden;
 
@@ -213,8 +213,28 @@ body {
   height: auto;
   object-fit: contain;
 
-  z-index: 1;
   pointer-events: none;
+}
+
+.player-cat {
+  width: 30%;
+  max-height: 100%;
+  z-index: 1;
+
+  left: 9%;
+  top: 17%;
+  border-radius: 200px;
+}
+
+.player-overlay {
+  width: 30%;
+  max-height: 100%;
+  z-index: 2;
+
+  left: 9%;
+  top: 17%;
+  transform: scale(1.33);
+  transform-origin: center;
 }
 
 .enemy-cat {
@@ -226,15 +246,16 @@ body {
   border-radius: 200px;
 }
 
-.player-cat {
+.enemy-overlay {
   width: 30%;
   max-height: 100%;
+  z-index: 2;
 
-  left: 9%;
-  top: 17%;
-  border-radius: 200px;
+  right: 9%;
+  bottom: 5%;
+  transform: scale(1.33);
+  transform-origin: center;
 }
-
 
 /* =================================
    CHARACTER CARDS
@@ -296,12 +317,12 @@ body {
 }
 
 .enemigo {
-  top: 15%;
+  top: 12%;
   right: 3%;
 }
 
 .jugador {
-  bottom: 4%;
+  bottom: 2%;
   left: 3%;
 }
 
@@ -343,14 +364,10 @@ body {
   box-shadow: none;
 }
 
-#turnoActual {
-  font-size: clamp(10px, 1.5vw, 12px);
-}
-
 #preguntaAccion {
   margin: 4px 0;
 
-  font-size: clamp(13px, 2vw, 17px);
+  font-size: clamp(16px, 2vw, 27px);
   font-weight: 800;
   line-height: 1.3;
 }

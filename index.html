@@ -20,14 +20,14 @@
     <!-- BATTLE HUD -->
     <div class="hud" id="informacionBatalla">
       <!-- PLAYER 1 -->
-      <div class="life life-player1" id="estadoJugador1">
+      <div class="life life-player1" id="estadoAliado">
         <div class="health-bar">
-          <progress class="progress is-success" id="barraVidaJugador1" value="50" max="150"></progress>
+          <progress class="progress is-success" id="barraVidaAliado" value="50" max="150"></progress>
           <div class="health-label">
-            <span>Vida</span><span id="vidaJugador1">50 / 150</span>
+            <span>Vida</span><span id="vidaAliado">--</span>
           </div>
         </div>
-        <div class="tag turn-tag" id="turnoJugador1">Equipo aliado/ Tu turno</div>
+        <div class="tag turn-tag" id="turnoAliado">Equipo aliado/ Tu turno</div>
       </div>
 
       <!-- ROUND -->
@@ -37,40 +37,41 @@
       </div>
 
       <!-- PLAYER 2 -->
-      <div class="life life-player2" id="estadoJugador2">
+      <div class="life life-player2" id="estadoEnemigo">
         <div class="health-bar">
-          <progress class="progress is-success" id="barraVidaJugador2" value="100" max="150"></progress>
+          <progress class="progress is-success" id="barraVidaEnemigo" value="100" max="150"></progress>
           <div class="health-label">
-            <span>Vida</span><span id="vidaJugador2">100 / 150</span>
+            <span>Vida</span><span id="vidaEnemigo">--</span>
           </div>
         </div>
-        <div class="tag turn-tag" id="turnoJugador2">Equipo rival</div>
+        <div class="tag turn-tag" id="turnoEnemigo">Equipo rival</div>
       </div>
     </div>
 
     <!-- CHARACTERS -->
 
     <!-- PLAYER CARD -->
-    <img class="cat player-cat" id="imagenJugador" src="images/GatoBobo.webp" alt="Gato Bobo">
-    <article class="card character-card jugador" id="tarjetaJugador">
+    <img class="cat player-cat" id="imagenAliado" src="images/webp" alt="Aliado">
+    <img class="cat player-overlay" id="overlayAliado" src="images/Halo.webp" alt="Halo">
+    <article class="card character-card jugador" id="tarjetaAliado">
       <div class="card-content">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
-          <strong id="nombreJugador">Gato Bobo</strong>
-          <span id="nivelJugador">Nv 10</span>
+          <strong id="nombreAliado">Gato Bobo</strong>
+          <span id="nivelAliado">Nv 10</span>
         </div>
-        <div class="is-flex is-justify-content-space-between character-types" id="tiposJugador">
-          <span class="tag" id="tipoJugador1">Caotico</span>
-          <span class="tag" id="tipoJugador2">Suerte</span>
+        <div class="is-flex is-justify-content-space-between character-types" id="tiposAliado">
+          <span class="tag" id="tipoAliado">--</span>
         </div>
         <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
-          <span id="propietarioJugador">Equipo Aliado</span>
-          <span id="indicadoresJugador">🟢🟢🟢</span>
+          <span id="propietarioAliado">Equipo Aliado</span>
+          <span id="indicadoresAliado">🟢🟢🟢</span>
         </div>
       </div>
     </article>
 
     <!-- ENEMY CARD -->
-    <img class="cat enemy-cat" id="imagenEnemigo" src="images/GatoTonto.webp" alt="Gato Tonto">
+    <img class="cat enemy-cat" id="imagenEnemigo" src="images/.webp" alt="Enemigo">
+    <img class="cat enemy-overlay" id="overlayEnemigo" src="images/Horns.webp" alt="Horns">
     <article class="card character-card enemigo" id="tarjetaEnemigo">
       <div class="card-content">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
@@ -78,8 +79,7 @@
           <strong id="nombreEnemigo">Gato Tonto</strong>
         </div>
         <div class="is-flex is-justify-content-space-between character-types" id="tiposEnemigo">
-          <span class="tag" id="tipoEnemigo1">Hibrido</span>
-          <span class="tag" id="tipoEnemigo2">Volador</span>
+          <span class="tag" id="tipoEnemigo">--</span>
         </div>
         <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
           <span id="indicadoresEnemigo">🟢🟢🔘</span>
@@ -94,9 +94,9 @@
   <section class="menu" id="menuAcciones">
     <div class="columns is-mobile is-variable is-1 action-layout">
       <!-- MESSAGE -->
-      <div class="column is-7">
+      <div class="column is-7" id="firstBottomColumn">
         <div class="box msg has-text-black" id="mensajeAccion">
-          <span id="turnoActual"><span class= "has-text-weight-bold">Jugador 1</span> • Elige una opción/acción.</span>
+          <span><span class= "has-text-weight-bold" id="turnoActual">Aliado 1</span> • Elige una opción/acción.</span>
           <p id="preguntaAccion">¿Qué quieres que haga Gato Bobo?</p>
           <span id="instruccionesAccion">(Flechas, Enter para elegir, o toca un botón)</span>
         </div>
