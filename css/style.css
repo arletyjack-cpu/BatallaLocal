@@ -218,19 +218,21 @@ body {
 }
 
 .enemy-cat {
-  width: 34%;
-  max-height: 63%;
+  width: 30%;
+  max-height: 100%;
 
-  right: 13%;
-  bottom: 0;
+  right: 9%;
+  bottom: 5%;
+  border-radius: 200px;
 }
 
 .player-cat {
-  width: 19%;
-  max-height: 43%;
+  width: 30%;
+  max-height: 100%;
 
-  left: 11%;
-  top: 29%;
+  left: 9%;
+  top: 17%;
+  border-radius: 200px;
 }
 
 
@@ -294,13 +296,13 @@ body {
 }
 
 .enemigo {
-  top: 24%;
+  top: 15%;
   right: 3%;
 }
 
 .jugador {
-  bottom: 5%;
-  left: 2%;
+  bottom: 4%;
+  left: 3%;
 }
 
 

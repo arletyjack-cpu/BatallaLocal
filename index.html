@@ -27,7 +27,7 @@
             <span>Vida</span><span id="vidaJugador1">50 / 150</span>
           </div>
         </div>
-        <div class="tag turn-tag" id="turnoJugador1">Jugador 1 / Tu turno</div>
+        <div class="tag turn-tag" id="turnoJugador1">Equipo aliado/ Tu turno</div>
       </div>
 
       <!-- ROUND -->
@@ -44,33 +44,14 @@
             <span>Vida</span><span id="vidaJugador2">100 / 150</span>
           </div>
         </div>
-        <div class="tag turn-tag" id="turnoJugador2">Jugador 2</div>
+        <div class="tag turn-tag" id="turnoJugador2">Equipo rival</div>
       </div>
     </div>
 
     <!-- CHARACTERS -->
-    <img class="cat enemy-cat" id="imagenEnemigo" src="images/GatoTonto.webp" alt="Gato Tonto">
-    <img class="cat player-cat" id="imagenJugador" src="images/GatoBobo.webp" alt="Gato Bobo">
-
-    <!-- ENEMY CARD -->
-    <article class="card character-card enemigo" id="tarjetaEnemigo">
-      <div class="card-content">
-        <div class="is-flex is-justify-content-space-between is-align-items-center">
-          <span id="nivelEnemigo">Nv 11</span>
-          <strong id="nombreEnemigo">Gato Tonto</strong>
-        </div>
-        <div class="is-flex is-justify-content-space-between character-types" id="tiposEnemigo">
-          <span class="tag" id="tipoEnemigo1">Hibrido</span>
-          <span class="tag" id="tipoEnemigo2">Volador</span>
-        </div>
-        <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
-          <span id="indicadoresEnemigo">🟢🔘⭕</span>
-          <span id="propietarioEnemigo">Jugador 2</span>
-        </div>
-      </div>
-    </article>
 
     <!-- PLAYER CARD -->
+    <img class="cat player-cat" id="imagenJugador" src="images/GatoBobo.webp" alt="Gato Bobo">
     <article class="card character-card jugador" id="tarjetaJugador">
       <div class="card-content">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
@@ -82,11 +63,31 @@
           <span class="tag" id="tipoJugador2">Suerte</span>
         </div>
         <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
-          <span id="propietarioJugador">Jugador 1</span>
-          <span id="indicadoresJugador">🟢🔘⭕</span>
+          <span id="propietarioJugador">Equipo Aliado</span>
+          <span id="indicadoresJugador">🟢🟢🟢</span>
         </div>
       </div>
     </article>
+
+    <!-- ENEMY CARD -->
+    <img class="cat enemy-cat" id="imagenEnemigo" src="images/GatoTonto.webp" alt="Gato Tonto">
+    <article class="card character-card enemigo" id="tarjetaEnemigo">
+      <div class="card-content">
+        <div class="is-flex is-justify-content-space-between is-align-items-center">
+          <span id="nivelEnemigo">Nv 11</span>
+          <strong id="nombreEnemigo">Gato Tonto</strong>
+        </div>
+        <div class="is-flex is-justify-content-space-between character-types" id="tiposEnemigo">
+          <span class="tag" id="tipoEnemigo1">Hibrido</span>
+          <span class="tag" id="tipoEnemigo2">Volador</span>
+        </div>
+        <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
+          <span id="indicadoresEnemigo">🟢🟢🔘</span>
+          <span id="propietarioEnemigo">Equipo Enemigo</span>
+        </div>
+      </div>
+    </article>
+
   </section>
 
   <!-- ACTION MENU -->
