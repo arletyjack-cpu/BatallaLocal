@@ -15,10 +15,18 @@
     <button class="button pause" id="botonPausa" aria-label="Pausa">❚❚</button>
   </header>
 
+  <!-- PERSONAJES -->
+  <section class="personajes" id="personajes" style="display: none;"></section>
+
+  <!-- MOCHILA -->
+  <section class="mochila" id="mochila" style="display: none;"></section>
+
   <!-- BATTLE ARENA -->
-  <section class="arena" id="arena">
+  <section class="arena main-gui" id="arena">
+
     <!-- BATTLE HUD -->
     <div class="hud" id="informacionBatalla">
+
       <!-- PLAYER 1 -->
       <div class="life life-player1" id="estadoAliado">
         <div class="health-bar">
@@ -32,8 +40,9 @@
 
       <!-- ROUND -->
       <div class="round has-text-centered" id="ronda">
-        <small id="ventajaElemental">Agua x1.5 / Fuego x0.5</small>
+        <span class="is-size-6" id="clima">Soleado</span>
         <span class="has-text-weight-bold" id="numeroRonda">Ronda 2</span>
+        <small id="ventajaElemental">Agua x1.5 / Fuego x0.5</small>
       </div>
 
       <!-- PLAYER 2 -->
@@ -51,8 +60,11 @@
     <!-- CHARACTERS -->
 
     <!-- PLAYER CARD -->
-    <img class="cat player-cat" id="imagenAliado" src="images/webp" alt="Aliado">
-    <img class="cat player-overlay" id="overlayAliado" src="images/Halo.webp" alt="Halo">
+    <div class="player-cat" id="canvasAliado">
+      <img class="player-image" id="imagenAliado" src="images/placeholder.webp" alt="Aliado">
+      <img class="player-overlay" id="overlayAliado" src="images/Halo.webp" alt="Halo">
+    </div>
+
     <article class="card character-card jugador" id="tarjetaAliado">
       <div class="card-content">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
@@ -70,8 +82,10 @@
     </article>
 
     <!-- ENEMY CARD -->
-    <img class="cat enemy-cat" id="imagenEnemigo" src="images/.webp" alt="Enemigo">
-    <img class="cat enemy-overlay" id="overlayEnemigo" src="images/Horns.webp" alt="Horns">
+    <div class="enemy-cat" id="canvasEnemigo">
+      <img class="enemy-image" id="imagenEnemigo" src="images/placeholder.webp" alt="Enemigo">
+      <img class="enemy-overlay" id="overlayEnemigo" src="images/Horns.webp" alt="Horns">
+    </div>
     <article class="card character-card enemigo" id="tarjetaEnemigo">
       <div class="card-content">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
@@ -94,21 +108,23 @@
   <section class="menu" id="menuAcciones">
     <div class="columns is-mobile is-variable is-1 action-layout">
       <!-- MESSAGE -->
-      <div class="column is-7" id="firstBottomColumn">
+      <div class="column is-7" id="textColumn">
         <div class="box msg has-text-black" id="mensajeAccion">
-          <span><span class= "has-text-weight-bold" id="turnoActual">Aliado 1</span> • Elige una opción/acción.</span>
-          <p id="preguntaAccion">¿Qué quieres que haga Gato Bobo?</p>
-          <span id="instruccionesAccion">(Flechas, Enter para elegir, o toca un botón)</span>
+          <span><span class= "has-text-weight-bold" id="turnoActual">Equipo Aliado</span> • Elige una opción/acción.</span>
+          <p id="preguntaAccion">¿Qué quieres que haga -Insertar Gato-?</p>
+          <span id="instruccionesAccion">(Haz click, o usa teclado para elegir un botón)</span>
         </div>
       </div>
 
       <!-- BUTTON GRID -->
-      <div class="column is-5">
-        <div class="btns" id="botonesAccion">
+      <div class="column is-5" id="buttonColumn" style="max-height: 130px;">
+        <div class="btns grid-4" id="botonesAccion">
           <button class="button b pelear" id="botonPelear"><span>⚔ Pelear</span><span class="k">1</span></button>
           <button class="button b pers" id="botonPersonajes"><span>👥 Personajes</span><span class="k">2</span></button>
           <button class="button b moch" id="botonMochila"><span>🎒 Mochila</span><span class="k">3</span></button>
           <button class="button b huir" id="botonHuir"><span>🏃 Huir</span><span class="k">4</span></button>
+          <button class="button b pelear" id="botonElegirPersonaje" style="display: none;"><span>💉 Aplicar</span><span class="k">1</span></button>
+          <button class="button b pers" id="botonCancelarMochila" style="display: none;"><span>🔙 Cancelar</span><span class="k">2</span></button>
         </div>
       </div>
     </div>
