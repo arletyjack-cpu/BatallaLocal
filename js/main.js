@@ -1,9 +1,14 @@
 //--------------------------------------------------------VARIABLES
-let gameOver = false;
 const arena = document.getElementById("arena");
+const arenaBackground = document.getElementById("arenaBackground");
+const apiTimeout = 1000;
+
+let gameOver = false;
 let whoseTurn = "Aliado";
+let mochilaMenuState = null;
 let activeAliado;
 let activeEnemigo;
+let enemySwitchPromise = Promise.resolve();
 let climate = "";
 let preguntaAccion = "";
 
@@ -19,46 +24,54 @@ const teamInventories = { Aliado: {}, Enemigo: {} };
 
 const characterType = ["Fuego", "Agua", "Planta"]
 const regularAttackMoves = [
-  { name: "Porrazo", type: "Normal", pp: 25, multiplier: 1 },
-  { name: "Tortazo vital", type: "Normal", pp: 15, multiplier: 1.5 },
-  { name: "Ataque currado", type: "Normal", pp: 20, multiplier: 1.25 }
+  { name: "Porrazo", type: "Normal", category: "contact", pp: 25, multiplier: 2 },
+  { name: "Tortazo vital", type: "Normal", category: "contact", pp: 15, multiplier: 2.5 },
+  { name: "Ataque currado", type: "Normal", category: "contact", pp: 20, multiplier: 3 }
 ];
+
+const attackEmojis = { Normal: "✊", Planta: "🍃", Fuego: "🔥", Agua: "💦" };
 const typedAttackMoves = {
   Fuego: [
-    { name: "Llamarada", type: "Fuego", pp: 5, multiplier: 2 },
-    { name: "Bola de fuego", type: "Fuego", pp: 15, multiplier: 1.5 },
-    { name: "Explosión ígnea", type: "Fuego", pp: 5, multiplier: 4 }
+    { name: "Llamarada", type: "Fuego", category: "ranged", pp: 8, multiplier: 2.5 },
+    { name: "Bola de fuego", type: "Fuego", category: "ranged", pp: 15, multiplier: 2.25 },
+    { name: "Explosión ígnea", type: "Fuego", category: "aoe", pp: 5, multiplier: 2.75 }
   ],
   Agua: [
-    { name: "Chorro de agua", type: "Agua", pp: 25, multiplier: 2 },
-    { name: "Tsunami", type: "Agua", pp: 3, multiplier: 4.5 },
-    { name: "67 de agua", type: "Agua", pp: 10, multiplier: 1.5 }
+    { name: "Chorro de agua", type: "Agua", category: "ranged", pp: 25, multiplier: 2.25 },
+    { name: "Tsunami", type: "Agua", category: "aoe", pp: 3, multiplier: 3 },
+    { name: "67 de agua", type: "Agua", category: "contact", pp: 10, multiplier: 2.5 }
   ],
   Planta: [
-    { name: "Latigazo de lianas", type: "Planta", pp: 10, multiplier: 2.5 },
-    { name: "Hoja afilada", type: "Planta", pp: 25, multiplier: 1.75 },
-    { name: "Onda vital", type: "Planta", pp: 5, multiplier: 3.5 }
+    { name: "Latigazo de lianas", type: "Planta", category: "contact", pp: 10, multiplier: 2.5 },
+    { name: "Hoja afilada", type: "Planta", category: "ranged", pp: 25, multiplier: 2.25 },
+    { name: "Onda vital", type: "Planta", category: "aoe", pp: 5, multiplier: 2.75 }
   ]
 };
 
+
+const randomNames = ["Dem", "Dani", "Arlet", "Adalberto", "5000", "Tonto", "Gato", "Gatillo", "Feline", "Cesaron", "Victorin"];
+const insults = ["Silly", "Stupid", "Idiotic", "Moronic", "Baboso/e", "Taradeitor 2000", "Tonoto", "Smelly", "Loser"];
+const randomInsultFallback = () => insults[Math.floor(Math.random() * insults.length)];
+const randomAge = () => Math.floor(Math.random() * 21) + 50;
+
 const typeEffectiveness = {
-  Fuego: { Planta: 2, Agua: 0.5, Fuego: 1, Normal: 1 },
-  Planta: { Agua: 2, Fuego: 0.5, Planta: 1, Normal: 1 },
-  Agua: { Fuego: 2, Planta: 0.5, Agua: 1, Normal: 1 },
+  Fuego: { Planta: 2.5, Agua: 0.75, Fuego: 1, Normal: 1 },
+  Planta: { Agua: 2.5, Fuego: 0.75, Planta: 1, Normal: 1 },
+  Agua: { Fuego: 2.5, Planta: 0.75, Agua: 1, Normal: 1 },
   Normal: { Fuego: 1, Planta: 1, Agua: 1, Normal: 1  }
 };
 
 const climates = ["Soleado", "Lluvioso", "Caluroso"];
 const ClimateMultiplier = {
-  Soleado: { Fuego: 1.25, Agua: 1, Planta: 1.5, Normal: 1 },
-  Lluvioso: { Fuego: 0.5, Agua: 1.5, Planta: 1.25, Normal: 1 },
-  Caluroso: { Fuego: 1.5, Agua: 0.5, Planta: 0.75, Normal: 1 }
+  Soleado: { Fuego: 1.25, Agua: 0.9, Planta: 1.5, Normal: 1 },
+  Lluvioso: { Fuego: 0.8, Agua: 1.5, Planta: 1.25, Normal: 1 },
+  Caluroso: { Fuego: 1.5, Agua: 0.9, Planta: 0.75, Normal: 1 }
 };
 
 const msgBox = document.getElementById("textColumn")
 let defaultMsgBox = `
         <div class="box msg has-text-black" id="mensajeAccion">
-          <span><span class= "has-text-weight-bold" id="turnoActual">Equipo ${whoseTurn}</span> • Elige una opción/acción.</span>
+          <span><span class= "has-text-weight-bold" id="turnoActual">Equipo ${whoseTurn}</span> • Turno en progreso.</span>
           <p id="preguntaAccion">¿Qué quieres que haga -Insertar Gate-?</p>
           <span id="instruccionesAccion">(Haz click, o usa teclado para elegir un botón)</span>
         </div>`
@@ -72,19 +85,30 @@ const botonMochila = document.getElementById("botonMochila");
 const botonHuir = document.getElementById("botonHuir");
 
 const elegirPersonaje = document.getElementById("botonElegirPersonaje")
-const cancelarPersonaje = document.getElementById("botonCancelarMochila")
+const cancelarMochila = document.getElementById("botonCancelarMochila")
+
+const enviarPersonaje = document.getElementById("enviarPersonaje")
+const cancelarPersonaje = document.getElementById("cancelarPersonaje")
 
 const actionButtons = [botonPelear, botonPersonajes, botonMochila, botonHuir];
-const mochilaButtons = [elegirPersonaje, cancelarPersonaje];
-
-let mochilaMenuState = null;
+const mochilaButtons = [elegirPersonaje, cancelarMochila];
+const personajeButtons = [enviarPersonaje, cancelarPersonaje]
 
 //--------------------------------------------------------FUNCTIONS
 
-//-------CREATE
+//-------CREATE STUFF 
 
 function randomClimate() {
-  return climates[Math.floor(Math.random() * climates.length)];
+  const selectedClimate = climates[Math.floor(Math.random() * climates.length)];
+  const climateClass = {
+    Soleado: "clima-soleado",
+    Lluvioso: "clima-lluvioso",
+    Caluroso: "clima-caluroso"
+  };
+
+  arenaBackground.classList.remove("clima-soleado", "clima-lluvioso", "clima-caluroso");
+  arenaBackground.classList.add(climateClass[selectedClimate]);
+  return selectedClimate;
 }
 
 function updatePreguntaAccion(personaje) {
@@ -92,35 +116,109 @@ function updatePreguntaAccion(personaje) {
   document.getElementById("preguntaAccion").textContent = preguntaAccion;
 }
 
-async function generateUser() {
-  try {
-    const response = await fetch(
-      "https://randomuser.me/api/?inc=name,dob&noinfo"
-    );
+function generateUserInfoFallback() {
+  const name = randomNames[Math.floor(Math.random() * randomNames.length)];
+  return {
+    name,
+    age: randomAge(),
+  };
+}
 
+async function requestWithFallback(request, fallback, errorMessage) {
+  let timeoutId;
+  try {
+    const controller = new AbortController();
+    const requestPromise = request(controller.signal);
+    const timeoutFallback = new Promise(resolve => {
+      timeoutId = setTimeout(() => {
+        controller.abort();
+        console.error(`${errorMessage} (request timed out)`);
+        resolve(fallback());
+      }, apiTimeout);
+    });
+
+    return await Promise.race([requestPromise, timeoutFallback]);
+  } catch (error) {
+    console.error(errorMessage, error);
+    return fallback();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function loadPortraitFallback(name) {
+  const portraitUrl = `https://cataas.com/avatar/${encodeURIComponent(name)}?`;
+  try {
+    return await new Promise(resolve => {
+      const image = new Image();
+      let timeoutId;
+      const finish = portrait => {
+        clearTimeout(timeoutId);
+        image.onload = null;
+        image.onerror = null;
+        resolve(portrait);
+      };
+
+      timeoutId = setTimeout(() => {
+        console.error("Character portrait request timed out");
+        finish("images/placeholder.webp");
+      }, apiTimeout);
+      image.onload = () => finish(portraitUrl);
+      image.onerror = () => {
+        console.error("Unable to load character portrait");
+        finish("images/placeholder.webp");
+      };
+      image.src = portraitUrl;
+    });
+  } catch (error) {
+    console.error("Unable to load character portrait:", error);
+    return "images/placeholder.webp";
+  }
+}
+
+async function generateUser() {
+  const userPromise = requestWithFallback(async signal => {
+    const response = await fetch(
+      "https://randomuser.me/api/?inc=name,dob&noinfo",
+      { signal }
+    );
     if (!response.ok) {
-      throw new Error("Failed to generate user");
+      throw new Warning("Failed to generate user");
     }
 
     const data = await response.json();
     const user = data.results[0];
-    const adjectiveResponse = await fetch("https://insult.mattbas.org/api/adjective")
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to fetch adjective");
-        return res.text();
-      })
-      .catch(() => "Silly");
+    if (!user?.name?.first || typeof user.dob?.age !== "number") {
+      throw new Warning("Invalid user data received");
+    }
 
-    return {
-      firstName: String(adjectiveResponse).charAt(0).toUpperCase() + String(adjectiveResponse).slice(1) + " " + user.name.first,
-      age: user.dob.age,
-      portrait: `https://cataas.com/avatar/${user.name.first}?`
-    };
+    return { name: user.name.first, age: user.dob.age };
+  }, generateUserInfoFallback, "Error generating user name and age");
 
-  } catch (error) {
-    console.error("Error generating user:", error);
-    return null;
-  }
+  const insultPromise = requestWithFallback(async signal => {
+    const response = await fetch("https://insult.mattbas.org/api/insult", { signal });
+    if (!response.ok) {
+      throw new Warning("Failed to fetch insult");
+    }
+
+    const insult = (await response.text()).trim();
+    if (!insult) {
+      throw new Warning("Empty insult response");
+    }
+    return insult;
+  }, randomInsultFallback, "Error generating user insult");
+
+  const user = await userPromise;
+  const [insult, portrait] = await Promise.all([
+    insultPromise,
+    loadPortraitFallback(user.name)
+  ]);
+
+  return {
+    firstName: `${insult.charAt(0).toUpperCase()}${insult.slice(1)} ${user.name}`,
+    age: user.age,
+    portrait
+  };
 }
 
 function assignAttacks(character) {
@@ -130,7 +228,8 @@ function assignAttacks(character) {
     const selected = [];
 
     for (let i = 0; i < 2; i++) {
-      selected.push(available.splice(Math.floor(Math.random() * available.length), 1)[0]);
+      const move = available.splice(Math.floor(Math.random() * available.length), 1)[0];
+      selected.push({ ...move, maxPP: move.pp });
     }
 
     return selected;
@@ -186,7 +285,8 @@ function generateInventory() {
   return inventory;
 }
 
-//------------UPDATE
+//------------UPDATE STUFF
+
 function updateHud(round, climate) {
   document.getElementById("clima").textContent = `Dia ${climate}`;
   document.getElementById("numeroRonda").textContent = "Ronda " + round;
@@ -195,9 +295,13 @@ function updateHud(round, climate) {
 
 function loadPlayerData(personaje) {
   team = personaje.afiliation;
+  const teamCharacters = window[`equipo${team}`] || [];
   document.getElementById("barraVida" + team).max = personaje.initialHealth;
   document.getElementById("barraVida" + team).value = personaje.health;
   document.getElementById("vida" + team).textContent = `${personaje.health} / ${personaje.initialHealth}`;
+  document.getElementById("indicadores" + team).textContent = teamCharacters
+    .map(character => character.health > 0 ? "🟢" : "🔘")
+    .join("");
 
   document.getElementById("nombre" + team).textContent = personaje.firstName;
   document.getElementById("tipo" + team).textContent = personaje.type;
@@ -206,11 +310,9 @@ function loadPlayerData(personaje) {
 }
 
 function manageButtons(buttons, toggle) {
-  const elementId = buttons === "mochila" ? "mochilaButtons" : buttons;
-  const buttonGroup = document.getElementById(elementId);
-  if (!buttonGroup) return;
-
-  buttonGroup.style.display = toggle ? "" : "none";
+  for (const button of buttons) {
+    button.style.display = toggle ? "" : "none";
+  }
 }
 
 //===============================================================================================================
@@ -218,44 +320,201 @@ function manageButtons(buttons, toggle) {
 //===============================================================================================================
 
 //---------------------------------------ATTACK
-function attackAnimation(attacker, attackMove, defender) {
-  const attackerImage = document.getElementById("canvas" + attacker.afiliation);
-  const defenderImage = document.getElementById("canvas" + defender.afiliation);
+//--------------ATTACK ANIMATIONS
 
-  defenderImage.classList.add("hit-shake");
-  setTimeout(() => {
-    defenderImage.classList.remove("hit-shake");
-  }, 1000);
+function getArenaPoint(element) {
+  const arenaRect = arena.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+
+  return {
+    x: elementRect.left + elementRect.width / 2 - arenaRect.left - arena.clientLeft,
+    y: elementRect.top + elementRect.height / 2 - arenaRect.top - arena.clientTop
+  };
 }
 
-function attack(attacker, attackMove, defender) {
+function createAttackEffect(emoji, point, extraClass = "") {
+  const effect = document.createElement("span");
+  effect.className = `attack-effect ${extraClass}`.trim();
+  effect.textContent = emoji;
+  effect.setAttribute("aria-hidden", "true");
+  effect.style.left = `${point.x}px`;
+  effect.style.top = `${point.y}px`;
+  arena.appendChild(effect);
+  return effect;
+}
+
+function createEmojiSplash(type, point, directions) {
+  const emoji = attackEmojis[type] || attackEmojis.Normal;
+  return Promise.all(directions.map(async direction => {
+    const particle = createAttackEffect(emoji, point, `attack-particle-${direction}`);
+    await runAttackAnimation(particle, "attack-particle", true);
+    particle.remove();
+  }));
+}
+
+function runAttackAnimation(animatee, animationClass, keepClass = false) {
+  return new Promise(resolve => {
+    const handleAnimationEnd = event => {
+      if (event.target !== animatee) return;
+
+      animatee.removeEventListener("animationend", handleAnimationEnd);
+      if (!keepClass) animatee.classList.remove(animationClass);
+      resolve();
+    };
+
+    animatee.addEventListener("animationend", handleAnimationEnd);
+    animatee.classList.add(animationClass);
+  });
+}
+
+async function preloadPortrait(portrait) {
+  const image = new Image();
+  image.src = portrait;
+
+  try {
+    await image.decode();
+  } catch (error) {
+    console.error("Unable to preload character portrait:", error);
+  }
+}
+
+async function attackAnimation(attacker, attackMove, defender, onImpact) {
+  const attackerImage = document.getElementById(`imagen${attacker.afiliation}`);
+  const defenderImage = document.getElementById(`imagen${defender.afiliation}`);
+  const attackerCanvas = document.getElementById(`canvas${attacker.afiliation}`);
+  const start = getArenaPoint(attackerImage);
+  const target = getArenaPoint(defenderImage);
+  const x = target.x - start.x;
+  const y = target.y - start.y;
+  const emoji = attackEmojis[attackMove.type] || attackEmojis.Normal;
+
+  const applyImpact = () => {
+    onImpact();
+    const defenderCanvas = document.getElementById(`canvas${defender.afiliation}`);
+    void runAttackAnimation(defenderCanvas, "hit-shake");
+  };
+
+  if (attackMove.category === "contact") {
+    const approachX = x * 0.68;
+    const hand = createAttackEffect("👋", { x: start.x, y: start.y - 24 });
+    attackerCanvas.style.setProperty("--attack-travel-x", `${approachX}px`);
+    hand.style.setProperty("--attack-travel-x", `${approachX}px`);
+    const approach = runAttackAnimation(attackerCanvas, "attack-contact");
+    await runAttackAnimation(hand, "attack-hand-contact", true);
+    applyImpact();
+    hand.textContent = "👏";
+    const splash = attackMove.type === "Normal"
+      ? Promise.resolve()
+      : createEmojiSplash(attackMove.type, { x: start.x + approachX, y: start.y - 24 }, [1, 3, 5, 7]);
+
+    await Promise.all([approach, splash]);
+    hand.remove();
+    attackerCanvas.style.removeProperty("--attack-travel-x");
+    return;
+  }
+
+  if (attackMove.category === "aoe") {
+    const splash = createEmojiSplash(attackMove.type, getArenaPoint(attackerImage), [1, 2, 3, 4, 5, 6, 7, 8]);
+    applyImpact();
+    await splash;
+    return;
+  }
+
+  const projectile = createAttackEffect(emoji, start);
+  projectile.style.setProperty("--attack-travel-x", `${x}px`);
+  projectile.style.setProperty("--attack-travel-y", `${y}px`);
+  await runAttackAnimation(projectile, "attack-projectile", true);
+  applyImpact();
+  projectile.remove();
+}
+
+function endGame(message) {
+  gameOver = true;
+  manageButtons(personajeButtons, false);
+  manageButtons(mochilaButtons, false);
+  manageButtons(actionButtons, true);
+
+  for (const button of actionButtons) {
+    button.disabled = true;
+  }
+
+///////////////////////////////////////////////////////////////////////GAMEOVER SCREEN
+}
+
+function handleMorido(character) {
+  if (character.health > 0) return;
+
+  const team = character.afiliation === "Aliado"
+    ? window.equipoAliado
+    : window.equipoEnemigo;
+  const replacement = team.find(member => member.health > 0 && member !== character);
+
+  if (character.afiliation === "Enemigo") {
+    setTimeout(() => {
+      document.getElementById("imagenEnemigo").classList.add("derrotado");
+    }, 1000);
+
+    if (!replacement) {
+      endGame("¡Todo el equipo enemigo ha sido derrotado! ¡Ganaste!");
+      return;
+    }
+
+    const replacementPortraitReady = preloadPortrait(replacement.portrait);
+    document.getElementById("preguntaAccion").textContent = `${character.firstName} fue debilitado.`;
+    enemySwitchPromise = new Promise(resolve => setTimeout(resolve, 3000)).then(async () => {
+      if (gameOver || activeEnemigo !== character) return;
+
+      await animateCharacterSwitch("Enemigo", replacement, replacementPortraitReady);
+      document.getElementById("preguntaAccion").textContent = `${replacement.firstName} entra en combate.`;
+    });
+    return;
+  }
+
+  setTimeout(() => {
+    if (gameOver) return;
+    if (!replacement) {
+      endGame("Todo tu equipo ha sido debilitado. Fin del combate.");
+      return;
+    }
+
+    whoseTurn = "Aliado";
+    characterSwitch(true);
+  }, 3000);
+}
+
+//------------------ATTACK LOGIC
+
+async function attack(attacker, attackMove, defender) {
   if (whoseTurn !== attacker.afiliation || defender.health <= 0 || attackMove.pp <= 0) return false;
 
   const effectiveness = typeEffectiveness[attackMove.type][defender.type];
   const damage = Math.round((attacker.attack * attackMove.multiplier * ClimateMultiplier[climate][attackMove.type] * effectiveness) / (defender.defense * 0.5));
-  attacker.attacks[attacker.attacks.indexOf(attackMove)].pp = Math.max(attackMove.pp - 1, 0);
+  attackMove.pp = Math.max(attackMove.pp - 1, 0);
+
+  await attackAnimation(attacker, attackMove, defender, () => {
     console.log(`${attacker.firstName} usa ${attackMove.name} contra ${defender.firstName}, infligiendo ${damage} de daño.`);
-  defender.health = Math.max(defender.health - damage, 0);
+    defender.health = Math.max(defender.health - damage, 0);
     console.log(`${defender.firstName} ahora tiene ${defender.health} de salud.`);
 
-  attackAnimation(attacker, attackMove, defender);
-  msgBox.innerHTML = `
-    <div class="box msg has-text-black" id="mensajeAccion">
-      <p id="preguntaAccion">${attacker.firstName} usó ${attackMove.name} y causó ${damage} de daño a ${defender.firstName}.</p>
-    </div>`;
-  msgAccion = document.getElementById("mensajeAccion");
+    msgBox.innerHTML = defaultMsgBox;
+    msgAccion = document.getElementById("mensajeAccion");
+    document.getElementById("turnoActual").textContent = `Equipo ${whoseTurn}`;
+    document.getElementById("instruccionesAccion").remove();
+    document.getElementById("preguntaAccion").textContent = `${attacker.firstName} usó ${attackMove.name} y causó ${damage} de daño a ${defender.firstName}.`;
 
-  if (effectiveness === 0) {
-    msgAccion.insertAdjacentHTML('beforeend', `<span>No tuvo efecto.</span>`);
-  } else if (effectiveness > 1) {
-    msgAccion.insertAdjacentHTML('beforeend', `<span>¡Es super efectivo!</span>`);
-  } else if (effectiveness < 1) {
-    msgAccion.insertAdjacentHTML('beforeend', `<span> No es muy efectivo.</span>`);
-  }
+    if (effectiveness === 0) {
+      msgAccion.insertAdjacentHTML("beforeend", "<span>No tuvo efecto.</span>");
+    } else if (effectiveness > 1) {
+      msgAccion.insertAdjacentHTML("beforeend", "<span>¡Es super efectivo!</span>");
+    } else if (effectiveness < 1) {
+      msgAccion.insertAdjacentHTML("beforeend", "<span> No es muy efectivo.</span>");
+    }
 
-      
-  loadPlayerData(attacker);
-  loadPlayerData(defender);
+    loadPlayerData(attacker);
+    loadPlayerData(defender);
+    handleMorido(defender);
+  });
+
   return true;
 }
 
@@ -285,101 +544,119 @@ function useItem(item, personaje) {
 
   inventory[item]--;
   loadPlayerData(personaje);
-  msgBox.innerHTML = `<div class="box msg has-text-black"><p>${personaje.firstName} recibió ${data.name}.</p></div>`;
+  document.getElementById("preguntaAccion").textContent = personaje.afiliation === "Aliado"
+    ? `Usaste ${data.name} en tu aliado ${personaje.firstName}.`
+    : `${personaje.firstName} recibió ${data.name}.`;
   return true;
 }
 
 //------------------PERSONAJES
 
-function characterSwitch() {
+async function animateCharacterSwitch(afiliation, character, portraitReady = preloadPortrait(character.portrait)) {
+  await portraitReady;
+
+  const canvas = document.getElementById(`canvas${afiliation}`);
+  const portraitImage = document.getElementById(`imagen${afiliation}`);
+  const animationClass = `cambio-${afiliation.toLowerCase()}`;
+
+  await runAttackAnimation(canvas, animationClass, true);
+
+  if (afiliation === "Aliado") {
+    activeAliado = character;
+  } else {
+    activeEnemigo = character;
+  }
+
+  loadPlayerData(character);
+  try {
+    await portraitImage.decode();
+  } catch (error) {
+    console.error("Unable to decode character portrait:", error);
+  }
+
+  portraitImage.classList.remove("derrotado");
+  const entranceClass = `entrada-${afiliation.toLowerCase()}`;
+  const entranceAnimation = runAttackAnimation(canvas, entranceClass);
+  canvas.classList.remove(animationClass);
+  await entranceAnimation;
+}
+
+function characterSwitch(forced = false) {
+  msgBox.innerHTML = defaultMsgBox;
+  document.getElementById("preguntaAccion").textContent = forced
+    ? `${activeAliado.firstName} fue debilitado. Debes elegir otro personaje.`
+    : "¿Qué gato enviarás al combate?";
+
   if (whoseTurn !== "Aliado" || !activeAliado) return;
 
+  arena.style.display = "none";
   const personajes = document.getElementById("personajes");
   const team = window.equipoAliado || [];
   if (!personajes) return;
 
-  if (!document.getElementById("personajesGuiStyles")) {
-    const styles = document.createElement("style");
-    styles.id = "personajesGuiStyles";
-    styles.textContent = `
-      #personajes.personajes-pantalla { position:fixed; inset:0; z-index:1000; overflow:auto; box-sizing:border-box; padding:clamp(16px,4vw,48px); color:#fff; background:radial-gradient(ellipse at top,#344d62,#111923 72%); }
-      .personajes-ventana { max-width:1100px; min-height:100%; margin:auto; display:flex; flex-direction:column; gap:22px; }
-      .personajes-encabezado,.personajes-pie { display:flex; align-items:center; gap:22px; padding:20px 24px; border:1px solid #ffffff35; border-radius:18px; background:#101923dd; }
-      .personajes-retratos { display:flex; align-items:center; padding-left:12px; }
-      .personajes-retratos img { width:64px; height:64px; object-fit:cover; border:3px solid white; border-radius:50%; background:#465566; }
-      .personajes-retratos img + img { margin-left:-20px; }
-      .personajes-afiliacion { margin:0; font-size:clamp(1.4rem,3vw,2rem); }
-      .personajes-subtitulo { margin:5px 0 0; color:#c1cedb; }
-      .personajes-tarjetas { display:grid; grid-template-columns:repeat(auto-fit,minmax(225px,1fr)); gap:18px; }
-      .personaje-tarjeta { overflow:hidden; padding:0; color:white; text-align:left; border:1px solid #ffffff45; border-radius:16px; background:#192532; cursor:pointer; transition:transform .18s,border-color .18s; }
-      .personaje-tarjeta:hover:not(:disabled),.personaje-tarjeta.seleccionado { transform:translateY(-3px); border-color:#ffe08a; box-shadow:0 0 0 2px #ffe08a55; }
-      .personaje-tarjeta:disabled { cursor:not-allowed; }
-      .personaje-estado { display:flex; justify-content:space-between; padding:12px 14px; font-weight:700; }
-      .personaje-retrato { position:relative; height:175px; overflow:hidden; }
-      .personaje-retrato::after { position:absolute; inset:0; content:""; background:linear-gradient(180deg,transparent 45%,#101923 100%); }
-      .personaje-retrato img { width:100%; height:100%; object-fit:cover; }
-      .personaje-retrato.disponible { background:linear-gradient(135deg,#237c70,#a0c96b); }
-      .personaje-retrato.combate { background:linear-gradient(135deg,#bd7533,#efcf69); }
-      .personaje-retrato.debilitado { background:linear-gradient(135deg,#4a4b56,#a4a4aa); filter:grayscale(.85); }
-      .personaje-datos { padding:8px 16px 16px; }
-      .personaje-datos h3 { margin:0 0 8px; font-size:1.2rem; }
-      .personaje-ps { display:flex; justify-content:space-between; margin-bottom:7px; color:#d5deea; }
-      .personaje-vida { width:100%; height:10px; accent-color:#68d391; }
-      .personajes-pie { justify-content:space-between; }
-      .personajes-mensaje { margin:0; color:#e0e8f0; }
-      .personajes-acciones { display:flex; gap:10px; }
-      .personajes-acciones button { padding:11px 20px; border:0; border-radius:10px; font:inherit; font-weight:700; cursor:pointer; }
-      #enviarPersonaje { color:#17212b; background:#ffe08a; }
-      #enviarPersonaje:disabled { opacity:.45; cursor:not-allowed; }
-      #cancelarPersonaje { color:white; background:#465566; }
-      @media(max-width:600px) { .personajes-encabezado { padding:15px; } .personajes-retratos img { width:50px;height:50px; } .personajes-pie { align-items:stretch; flex-direction:column; } .personajes-acciones button { flex:1; } }
-    `;
-    document.head.appendChild(styles);
-  }
-
   const statusOf = character => character.health <= 0
-    ? { label: "Debilitado", state: "debilitado", tooltip: "Está debilitado y no puede combatir." }
+    ? { label: "Debilitado", state: "debilitado"}
     : character === activeAliado
-      ? { label: "En combate", state: "combate", tooltip: "Este gato está luchando actualmente." }
-      : { label: "Disponible", state: "disponible", tooltip: "Está sano y puede entrar en combate." };
+      ? { label: "En combate", state: "combate"}
+      : { label: "Disponible", state: "disponible"};
+
   const portraits = team.slice(0, 3).map(character =>
     `<img src="${character.portrait}" alt="Retrato de ${character.firstName}">`
   ).join("");
 
-  actionButtons.forEach(button => button.disabled = true);
-  personajes.className = "personajes-pantalla";
+  manageButtons(actionButtons, false)
+  manageButtons(personajeButtons, true)
+  const sendButton = document.getElementById("enviarPersonaje");
+  const cancelButton = document.getElementById("cancelarPersonaje");
+  sendButton.disabled = true;
+  cancelButton.style.display = "";
+  cancelButton.disabled = forced;
+  btnsAccion.classList.replace("grid-4", "grid-2")
+
   personajes.style.display = "block";
   personajes.innerHTML = `
-    <div class="personajes-ventana">
-      <header class="personajes-encabezado">
-        <div class="personajes-retratos">${portraits}</div>
-        <div><h1 class="personajes-afiliacion">Equipo ${activeAliado.afiliation}</h1><p class="personajes-subtitulo">Elige quién continuará el combate</p></div>
+    <div class="menuGui-ventana main-gui">
+      <header class="menuGui-titulo">
+        <span class="personajes-retratos">${portraits}</span>PERSONAJES
       </header>
-      <section class="personajes-tarjetas" aria-label="Personajes del equipo">
+      <div class="columns m-2" aria-label="Personajes del equipo" style="min-height: 88%; overflow-y: auto;">
         ${team.map((character, index) => {
           const status = statusOf(character);
+          if (status.state === "disponible"){tag = `tag is-success`} else if (status.state === "combate"){tag = `tag is-warning`} else {tag = `tag is-danger`}
+          if (character.type === "Planta"){typeTag = `tag is-success`} else if (character.type === "Agua"){typeTag = `tag is-info`} else {typeTag = `tag is-danger`}
           const selectable = character.health > 0 && character !== activeAliado;
-          return `<button type="button" class="personaje-tarjeta" data-personaje="${index}" title="${status.tooltip}" aria-label="${character.firstName}: ${status.label}. ${status.tooltip}" ${selectable ? "" : "disabled"}>
-            <div class="personaje-estado"><span>${status.label}</span><span>Nivel ${character.age}</span></div>
-            <div class="personaje-retrato ${status.state}"><img src="${character.portrait}" alt=""></div>
-            <div class="personaje-datos"><h3>${character.firstName}</h3><div class="personaje-ps"><span>PS</span><span>${character.health} / ${character.initialHealth}</span></div><progress class="personaje-vida" max="${character.initialHealth}" value="${character.health}"></progress></div>
-          </button>`;
+          return `<div class="column is-one-third">
+            <div class="card personaje-tarjeta ${status.state} has-text-black" style="height: 100%; margin: auto;" data-personaje="${index}" title="${status.tooltip}" aria-label="${character.firstName}: ${status.label}. ${status.tooltip}" aria-disabled="${!selectable}" tabindex="${selectable ? 0 : -1}">
+              <div class="mx-4">
+                <div class="personaje-estado mt-2 px-0"><span class="${tag}">${status.label}</span><span>Nivel ${character.age}</span></div>
+                <div class="personaje-retrato my-2 ${status.state}"><img src="${character.portrait}" alt=""></div>
+                <div class="personaje-datos">
+                  <h3 class="has-text-weight-bold">${character.firstName}</h3>
+                  <span class="${typeTag}">${character.type}</span>
+                  <span>${character.health} / ${character.initialHealth} PS</span><progress class="progress is-success my-2 personaje-vida" value="${character.health}" max="${character.initialHealth}">${character.health} / ${character.initialHealth}</progress>
+                </div>
+                <div class="column is-full has-text-right" style="margin-top: 40%;">
+                  <span class="has-text-weight-bold" data-personaje-estado="${index}">${status.state === "combate" ? "En combate" : character === activeAliado ? "Seleccionado" : character.health > 0 ? "Puede combatir" : "No puede combatir"}</span>
+                </div>
+              </div>
+            </div>
+          </div>`;
         }).join("")}
-      </section>
-      <footer class="personajes-pie">
-        <p class="personajes-mensaje" id="mensajeCambio">Selecciona un gato disponible. Cambiar consume un turno.</p>
-        <div class="personajes-acciones"><button type="button" id="enviarPersonaje" disabled>Enviar gato</button><button type="button" id="cancelarPersonaje">Cancelar</button></div>
-      </footer>
+      </div>
     </div>`;
 
   let selectedCharacter = null;
-  const sendButton = document.getElementById("enviarPersonaje");
   personajes.querySelectorAll("[data-personaje]").forEach(button => {
     button.addEventListener("click", () => {
       selectedCharacter = team[Number(button.dataset.personaje)];
+      if (!selectedCharacter || selectedCharacter.health <= 0 || selectedCharacter === activeAliado) return;
       personajes.querySelectorAll(".personaje-tarjeta").forEach(card => card.classList.toggle("seleccionado", card === button));
+      personajes.querySelectorAll("[data-personaje-estado]").forEach(label => {
+        const character = team[Number(label.dataset.personajeEstado)];
+        label.textContent = character === selectedCharacter ? "Seleccionado" : character.health > 0 ? "Puede combatir" : "No puede combatir";
+      });
       sendButton.disabled = false;
-      document.getElementById("mensajeCambio").textContent = `Enviar a ${selectedCharacter.firstName} al combate. Esta acción consume un turno.`;
+      document.getElementById("preguntaAccion").textContent = `¿Enviar a ${selectedCharacter.firstName} al combate?`;
     });
   });
 
@@ -389,83 +666,91 @@ function characterSwitch() {
     personajes.className = "";
     document.getElementById("arena").style.display = "";
     document.getElementById("menuAcciones").style.display = "";
+
+    manageButtons(personajeButtons, false)
+    manageButtons(actionButtons, true)
+    btnsAccion.classList.replace("grid-2", "grid-4")
   };
-  sendButton.addEventListener("click", () => {
+  sendButton.onclick = async () => {
     if (whoseTurn !== "Aliado" || !selectedCharacter || selectedCharacter.health <= 0) return;
-    activeAliado = selectedCharacter;
-    loadPlayerData(activeAliado);
-    updatePreguntaAccion(activeAliado);
+    const nextCharacter = selectedCharacter;
+    sendButton.disabled = true;
     closeScreen();
-    msgBox.innerHTML = `<div class="box msg has-text-black"><p>${activeAliado.firstName} entra en combate.</p></div>`;
+    for (const button of actionButtons) {
+      button.disabled = true;
+    }
+
+    await animateCharacterSwitch("Aliado", nextCharacter);
+    document.getElementById("preguntaAccion").textContent = `${activeAliado.firstName} entra en combate.`;
     completePlayerMove();
-  });
-  document.getElementById("cancelarPersonaje").addEventListener("click", () => {
+  };
+  cancelButton.onclick = () => {
+    if (forced) return;
     closeScreen();
     actionButtons.forEach(button => button.disabled = false);
     msgBox.innerHTML = defaultMsgBox;
-    updatePreguntaAccion(activeAliado);
-  });
+    document.getElementById("preguntaAccion").textContent = `¿Qué quieres que haga ${activeAliado.firstName}?`;
+  };
 }
 
 //------------MOCHILA
 
 function mostrarMochila(personaje) {
   const mochila = document.getElementById("mochila");
-  const nombre = personaje.firstName;
-  const inventario = teamInventories[personaje.afiliation];
-  let selectedItem = Object.keys(items).find(itemId => inventario[itemId] > 0) || Object.keys(items)[0];
+  let selectedItem = Object.keys(items).find(itemId => teamInventories[personaje.afiliation][itemId] > 0) || Object.keys(items)[0];
 
+  msgBox.innerHTML = defaultMsgBox;
   mochila.innerHTML = `
-    <div class="mochila-ventana main-gui" id="ventanaMochila">
+    <div class="menuGui-ventana main-gui" id="ventanaMochila">
 
       <!-- ENCABEZADO -->
-      <header class="mochila-titulo" id="tituloMochila">
-        <span class="mochila-titulo-icono" id="iconoTituloMochila"></span>
-        <span id="textoTituloMochila">MOCHILA DE ${nombre.toUpperCase()}</span>
+      <header class="menuGui-titulo" id="tituloMochila">
+        <span class="menuGui-titulo-icono" id="iconoTituloMochila"></span>
+        <span id="textoTituloMochila">MOCHILA</span>
       </header>
 
       <!-- CUERPO: detalle (izquierda) + lista de objetos (derecha) -->
-      <div class="mochila-cuerpo" id="cuerpoMochila">
+      <div class="menuGui-cuerpo" id="cuerpoMochila">
 
         <!-- DETALLE DEL OBJETO SELECCIONADO -->
-        <aside class="mochila-detalle" id="detalleItem">
-          <div class="mochila-detalle-cabecera">
-              <div class="mochila-icono" id="detalleIcono">🎒</div>
-              <h2 class="mochila-detalle-nombre" id="detalleNombre"></h2>
+        <aside class="menuGui-detalle" id="detalleItem" style="align-self: start;">
+          <div class="menuGui-detalle-cabecera">
+              <div class="menuGui-icono" id="detalleIcono">🎒</div>
+              <h2 class="menuGui-detalle-nombre" id="detalleNombre"></h2>
           </div>
 
-          <p class="mochila-detalle-efecto" id="detalleEfecto">
+          <p class="menuGui-detalle-efecto" id="detalleEfecto">
             <span id="detalleCantidadPS"></span>
           </p>
 
-          <p class="mochila-detalle-descripcion" id="detalleDescripcion">
+          <p class="menuGui-detalle-descripcion" id="detalleDescripcion">
             <span id="detalleDescripcion"></span>
           </p>
 
-          <ul class="mochila-detalle-reglas" id="detalleReglas">
+          <ul class="menuGui-detalle-reglas" id="detalleReglas">
             <li id="reglaMaximo">No puede superar los PS máximos.</li>
             <li id="reglaDebilitado">No funciona en un Gato debilitado.</li>
           </ul>
 
-          <div class="mochila-detalle-nota" id="detalleNota">
-            <span class="mochila-nota-icono">ⓘ</span>
+          <div class="menuGui-detalle-nota" id="detalleNota">
+            <span class="menuGui-nota-icono">ⓘ</span>
             <span id="textoNota">Al usar la poción, consumes un turno</span>
           </div>
         </aside>
 
         <!-- LISTA DE OBJETOS -->
-        <div class="mochila-lista" id="listaItems">
+        <div class="menuGui-lista" id="listaItems">
 
           <!-- Objeto seleccionado: lleva la clase "seleccionado" -->
-          ${Object.entries(items).filter(([itemId]) => inventario[itemId] > 0).map(([itemId, item]) => `
-            <button class="mochila-item" data-item="${itemId}">
-              <span class="mochila-item-flecha">▶</span>
-              <span class="mochila-icono ${itemId}">🎒</span>
-              <span class="mochila-item-info">
-                <span class="mochila-item-nombre">${item.name}</span>
-                <span class="mochila-item-efecto">${item.ps === "Full" ? "Recuperación completa" : item.effect === "Revive" ? "Revivir con 30% PS" : `Recuperas ${item.ps} PS`}</span>
+          ${Object.entries(items).filter(([itemId]) => teamInventories[personaje.afiliation][itemId] > 0).map(([itemId, item]) => `
+            <button class="menuGui-item" data-item="${itemId}">
+              <span class="menuGui-item-flecha">▶</span>
+              <span class="menuGui-icono ${itemId}">🎒</span>
+              <span class="menuGui-item-info">
+                <span class="menuGui-item-nombre">${item.name}</span>
+                <span class="menuGui-item-efecto">${item.ps === "Full" ? "Recuperación completa" : item.effect === "Revive" ? "Revivir con 30% PS" : `Recuperas ${item.ps} PS`}</span>
               </span>
-              <span class="mochila-item-cantidad">×${inventario[itemId]}</span>
+              <span class="menuGui-item-cantidad">×${teamInventories[personaje.afiliation][itemId]}</span>
             </button>`).join("")}
         </div>
       </div>
@@ -473,27 +758,10 @@ function mostrarMochila(personaje) {
     </div>
   `;
 
-
-  pregAccion.textContent = "¿Qué item deseas usar?"
-  actionButtons.forEach(button => button.style.display = "none");
+  document.getElementById("preguntaAccion").textContent = "¿Qué item deseas usar?";
+  manageButtons(actionButtons, false);
+  manageButtons(mochilaButtons, true);
   btnsAccion.classList.replace("grid-4", "grid-2")
-  
-  /*msgBox.style.display = "none";
-  menuAcciones.insertAdjacentHTML("beforeend", `
-    <div class="mochila-pie" id="pieMochila">
-      <div class="mochila-mensaje" id="mensajeMochila">
-        <small id="mensajeMochilaPersonaje">${nombre} -</small>
-        <p id="mensajeMochilaAccion">Elige una Poción</p>
-      </div>
-      <div class="mochila-acciones" id="accionesMochila">
-        <button class="mochila-boton elegir" id="botonElegirPersonaje">
-          <span class="mochila-boton-icono"></span><span>Elegir Personaje</span>
-        </button>
-        <button class="mochila-boton cancelar" id="botonCancelarMochila">
-          <span class="mochila-boton-icono"></span><span>Cancelar</span>
-        </button>
-      </div>
-    </div>`)*/
   
   arena.style.display = "none";
   mochila.style.display = "block";
@@ -503,59 +771,212 @@ function mostrarMochila(personaje) {
     document.getElementById("detalleNombre").textContent = item.name;
     document.getElementById("detalleCantidadPS").textContent = item.ps === "Full" ? "PS y PP completos" : `${item.ps} PS`;
     document.getElementById("detalleDescripcion").textContent = item.effect.startsWith("Revive") ? "Reanima a un personaje debilitado." : "Recupera salud del personaje seleccionado.";
-    document.querySelectorAll(".mochila-item").forEach(button => button.classList.toggle("seleccionado", button.dataset.item === selectedItem));
+    document.querySelectorAll(".menuGui-item").forEach(button => button.classList.toggle("seleccionado", button.dataset.item === selectedItem));
   };
-  document.querySelectorAll(".mochila-item").forEach(button => button.addEventListener("click", () => {
+  document.querySelectorAll(".menuGui-item").forEach(button => button.addEventListener("click", () => {
     selectedItem = button.dataset.item;
     showItemDetails();
-    document.getElementById("mensajeMochilaAccion").textContent = `Elige ${items[selectedItem].name}`;
+    pregAccion.textContent = `Elige ${items[selectedItem].name}`;
   }));
   showItemDetails();
-  elegirPersonaje.addEventListener("click", () => {
-    const lista = document.getElementById("listaItems");
+  
+  const openTargetScreen = () => {
     const equipo = personaje.afiliation === "Aliado" ? window.equipoAliado : window.equipoEnemigo;
-    lista.innerHTML = equipo.map((target, index) => `
-      <button class="mochila-item" data-target="${index}" ${target.health <= 0 && !items[selectedItem].effect.startsWith("Revive") ? "disabled" : ""}>
-        <span class="mochila-item-nombre">${target.firstName}</span>
-        <span class="mochila-item-cantidad">${target.health} / ${target.initialHealth} PS</span>
-      </button>`).join("");
-    lista.querySelectorAll("[data-target]").forEach(button => button.addEventListener("click", () => {
-      const target = equipo[Number(button.dataset.target)];
-      if (useItem(selectedItem, target)) {
-        cerrarMochila();
-        completePlayerMove();
-      } else {
-        document.getElementById("mensajeMochilaAccion").textContent = "No se puede usar ese objeto en este personaje.";
-      }
+    const data = items[selectedItem];
+    const canApplyItem = target => {
+      if (data.effect === "Revive" || data.effect === "ReviveMax") return target.health <= 0;
+      if (target.health <= 0) return false;
+      if (data.effect === "Recovery") return target.health < target.initialHealth;
+      return target.health < target.initialHealth || target.attacks.some(move => move.pp < move.maxPP);
+    };
+    const personajes = document.getElementById("personajes");
+    const portraits = equipo.slice(0, 3).map(target =>
+      `<img src="${target.portrait}" alt="Retrato de ${target.firstName}">`
+    ).join("");
+
+    personajes.className = "menuGui";
+    personajes.style.display = "block";
+    mochila.style.display = "none";
+    manageButtons(mochilaButtons, false);
+    manageButtons(personajeButtons, true);
+    enviarPersonaje.disabled = true;
+    enviarPersonaje.innerHTML = `<span>✅ Aplicar ${data.name}</span><span class="k">1</span>`;
+    cancelarPersonaje.innerHTML = `<span>↩ Volver a mochila</span><span class="k">2</span>`;
+    document.getElementById("preguntaAccion").textContent = `¿A quién usarás ${data.name}?`;
+    personajes.innerHTML = `
+      <div class="menuGui-ventana main-gui">
+        <header class="menuGui-titulo">
+          <span class="personajes-retratos">${portraits}</span>PERSONAJES
+        </header>
+        <div class="columns m-2" aria-label="Personajes del equipo" style="min-height: 88%; overflow-y: auto;">
+          ${equipo.map((target, index) => {
+            const selectable = canApplyItem(target);
+            const state = target.health <= 0 ? "debilitado" : target === activeAliado ? "combate" : "disponible";
+            const label = target.health <= 0 ? "Debilitado" : state === "combate" ? "En combate" : "Disponible";
+            const statusTag = state === "disponible" ? "tag is-success" : state === "combate" ? "tag is-warning" : "tag is-danger";
+            const typeTag = target.type === "Planta" ? "tag is-success" : target.type === "Agua" ? "tag is-info" : "tag is-danger";
+            return `
+              <div class="column is-one-third">
+                <div class="card personaje-tarjeta ${state} has-text-black" style="height: 100%; margin: auto; ${selectable ? "" : "opacity: 0.6; cursor: not-allowed;"}" data-target="${index}" aria-label="${target.firstName}: ${label}" aria-disabled="${!selectable}" tabindex="${selectable ? 0 : -1}">
+                  <div class="mx-4">
+                    <div class="personaje-estado mt-2 px-0"><span class="${statusTag}">${label}</span><span>Nivel ${target.age}</span></div>
+                    <div class="personaje-retrato my-2 ${state}"><img src="${target.portrait}" alt=""></div>
+                    <div class="personaje-datos">
+                      <h3 class="has-text-weight-bold">${target.firstName}</h3>
+                      <span class="${typeTag}">${target.type}</span>
+                      <span>${target.health} / ${target.initialHealth} PS</span><progress class="progress is-success my-2 personaje-vida" value="${target.health}" max="${target.initialHealth}">${target.health} / ${target.initialHealth} PS</progress>
+                    </div>
+                    <div class="column is-full has-text-right" style="margin-top: 40%;">
+                      <span class="has-text-weight-bold" data-item-target-state="${index}">${selectable ? "Puede recibir el objeto" : "No puede recibir el objeto"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+
+    let selectedTarget = null;
+    personajes.querySelectorAll("[data-target]").forEach(button => button.addEventListener("click", () => {
+      selectedTarget = equipo[Number(button.dataset.target)];
+      if (!selectedTarget || !canApplyItem(selectedTarget)) return;
+      personajes.querySelectorAll(".personaje-tarjeta").forEach(card => card.classList.toggle("seleccionado", card === button));
+      personajes.querySelectorAll("[data-item-target-state]").forEach(label => {
+        const target = equipo[Number(label.dataset.itemTargetState)];
+        label.textContent = target === selectedTarget ? "Seleccionado" : canApplyItem(target) ? "Puede recibir el objeto" : "No puede recibir el objeto";
+      });
+      enviarPersonaje.disabled = false;
+      document.getElementById("preguntaAccion").textContent = `¿Usar ${data.name} en ${selectedTarget.firstName}?`;
     }));
-  });
-  cancelarMochila.addEventListener("click", cerrarMochila);
+    enviarPersonaje.onclick = () => {
+      if (!selectedTarget || !useItem(selectedItem, selectedTarget)) return;
+      const itemMessage = document.getElementById("preguntaAccion").textContent;
+      personajes.style.display = "none";
+      personajes.className = "";
+      personajes.innerHTML = "";
+      enviarPersonaje.innerHTML = `<span>✅ Enviar Gato</span><span class="k">1</span>`;
+      cancelarPersonaje.innerHTML = `<span>❌ Cancelar</span><span class="k">2</span>`;
+      manageButtons(personajeButtons, false);
+      cerrarMochila(itemMessage);
+      completePlayerMove();
+    };
+    cancelarPersonaje.onclick = () => {
+      personajes.style.display = "none";
+      personajes.className = "";
+      personajes.innerHTML = "";
+      enviarPersonaje.innerHTML = `<span>✅ Enviar Gato</span><span class="k">1</span>`;
+      cancelarPersonaje.innerHTML = `<span>❌ Cancelar</span><span class="k">2</span>`;
+      manageButtons(personajeButtons, false);
+      mochila.style.display = "block";
+      manageButtons(mochilaButtons, true);
+      document.getElementById("preguntaAccion").textContent = `Elige ${data.name} o selecciona otro objeto.`;
+    };
+  };
+  elegirPersonaje.onclick = openTargetScreen;
+  cancelarMochila.onclick = () => cerrarMochila();
 }
 
-function cerrarMochila() {
+function cerrarMochila(message = "") {
   const mochila = document.getElementById("mochila");
-
   mochila.style.display = "none";
-  mochila.innerHTML = "";
-  document.getElementById("pieMochila")?.remove();
-  if (mochilaMenuState) {
-    msgBox.innerHTML = mochilaMenuState.msgBoxHTML;
-    msgBox.style.display = mochilaMenuState.msgBoxDisplay;
-    mochilaMenuState.buttons.forEach(({ button, hidden, display }) => {
-      button.hidden = hidden;
-      button.style.display = display;
-    });
-    mochilaMenuState = null;
-  }
-  document.getElementById("arena").style.display = "";
-  document.getElementById("menuAcciones").style.display = "";
+  manageButtons(actionButtons, true);
+  manageButtons(mochilaButtons, false);
+  btnsAccion.classList.replace("grid-2", "grid-4")
+  arena.style.display = "";
+  msgBox.innerHTML = defaultMsgBox;
+  updatePreguntaAccion(activeAliado);
+  if (message) document.getElementById("preguntaAccion").textContent = message;
+  loadPlayerData(activeAliado, "Aliado");
 }
 
 //-----------------------------TURN MANAGEMENT
 function completePlayerMove() {
-  if (whoseTurn !== "Aliado") return;
+  for (const button of actionButtons) {
+    button.disabled = true;
+  }
+  if (whoseTurn !== "Aliado" || gameOver) return;
+  whoseTurn = "Enemigo";
+  document.getElementById("turnoActual").textContent = "Equipo Enemigo";
   setTimeout(() => {
-    whoseTurn = "Enemigo";
+    playTurn();
+  }, 3000);
+}
+
+async function playEnemyMove() {
+  if (activeEnemigo.health <= 0) {
+    await enemySwitchPromise;
+    if (gameOver || activeEnemigo.health <= 0) return;
+  }
+
+  const enemyTeam = window.equipoEnemigo || [];
+  const inventory = teamInventories.Enemigo;
+  const actions = [];
+  const availableMoves = activeEnemigo.attacks.filter(move => move.pp > 0);
+
+  availableMoves.forEach(move => {
+    const effectiveness = typeEffectiveness[move.type][activeAliado.type];
+    const expectedDamage = activeEnemigo.attack * move.multiplier * ClimateMultiplier[climate][move.type] * effectiveness / (activeAliado.defense * 0.5);
+    actions.push({ type: "attack", move, weight: 1 + expectedDamage / 50 });
+  });
+
+  const healthRatio = activeEnemigo.health / activeEnemigo.initialHealth;
+  if (healthRatio < 0.5) {
+    const healingOptions = Object.keys(items)
+      .filter(itemId => (inventory[itemId] || 0) > 0)
+      .filter(itemId => items[itemId].effect === "Recovery" || items[itemId].effect === "FullRestore")
+      .map(itemId => {
+        const item = items[itemId];
+        const healAmount = item.effect === "FullRestore" ? activeEnemigo.initialHealth : item.ps;
+        const actualHealing = Math.min(healAmount, activeEnemigo.initialHealth - activeEnemigo.health);
+        return { itemId, actualHealing };
+      })
+      .filter(option => option.actualHealing > 0)
+      .sort((a, b) => a.actualHealing - b.actualHealing);
+    const healingNeeded = activeEnemigo.initialHealth * (0.7 - healthRatio);
+    const healingOption = healingOptions.find(option => option.actualHealing >= healingNeeded)
+      || healingOptions[healingOptions.length - 1];
+
+    if (healingOption) {
+      actions.push({
+        type: "heal",
+        itemId: healingOption.itemId,
+        weight: 1 + 2 * healingOption.actualHealing / activeEnemigo.initialHealth
+      });
+    }
+  }
+
+  const currentThreat = activeEnemigo.attacks.filter(move => move.pp > 0).reduce((best, move) =>
+    Math.max(best, typeEffectiveness[move.type][activeAliado.type]), 0);
+  if (healthRatio < 0.5 || currentThreat < 1) {
+    enemyTeam.filter(character => character.health > 0 && character !== activeEnemigo).forEach(character => {
+      const matchup = character.attacks.filter(move => move.pp > 0).reduce((best, move) =>
+        Math.max(best, typeEffectiveness[move.type][activeAliado.type]), 0);
+      if (character.health / character.initialHealth > healthRatio && matchup > currentThreat) {
+        actions.push({ type: "switch", character, weight: 1 + matchup + 2 * (1 - healthRatio) });
+      }
+    });
+  }
+
+  if (actions.length === 0) {
+    document.getElementById("preguntaAccion").textContent = `${activeEnemigo.firstName} no puede realizar ningún movimiento.`;
+  } else {
+    const totalWeight = actions.reduce((total, action) => total + action.weight, 0);
+    let roll = Math.random() * totalWeight;
+    const chosenAction = actions.find(action => (roll -= action.weight) <= 0) || actions[actions.length - 1];
+
+    if (chosenAction.type === "attack") {
+      await attack(activeEnemigo, chosenAction.move, activeAliado);
+      if (gameOver || activeAliado.health <= 0) return;
+    } else if (chosenAction.type === "heal") {
+      useItem(chosenAction.itemId, activeEnemigo);
+    } else {
+      await animateCharacterSwitch("Enemigo", chosenAction.character);
+      document.getElementById("preguntaAccion").textContent = `${activeEnemigo.firstName} entra en combate.`;
+    }
+  }
+
+  setTimeout(() => {
+    whoseTurn = "Aliado";
     playTurn();
   }, 3000);
 }
@@ -564,26 +985,34 @@ function playTurn() {
   if (gameOver) return;
   
   if (whoseTurn === "Aliado") {
-    actionButtons.forEach(button => button.disabled = false);
+    for (const button of mochilaButtons) {
+      button.disabled = false;
+    }
+    for (const button of personajeButtons) {
+      button.disabled = false;
+    }
+    for (const button of actionButtons) {
+      button.disabled = false;
+    }
     msgBox.innerHTML = defaultMsgBox;
     updatePreguntaAccion(activeAliado);
     return;
   } else if (whoseTurn === "Enemigo") {//------------------------------------AI ENEMY TURN
-    actionButtons.forEach(button => button.disabled = true);
-    msgBox.innerHTML = `
-      <div class="box msg has-text-black">
-        <span class="has-text-weight-bold">Turno enemigo</span>
-        <p>El enemigo está haciendo su movimiento...</p>
-      </div>`;
+    for (const button of actionButtons) {
+      button.disabled = true;
+    }
+    msgBox.innerHTML = defaultMsgBox;
+    document.getElementById("turnoActual").textContent = "Equipo Enemigo";
+    document.getElementById("preguntaAccion").textContent = "El enemigo está haciendo su movimiento...";
 
-    setTimeout(() => {
-      whoseTurn = "Aliado";
-      playTurn();
-    }, 100000);
+
+    setTimeout(playEnemyMove, 1000);
     return;
   }
 
-  actionButtons.forEach(button => button.disabled = false);
+  for (const button of actionButtons) {
+    button.disabled = false;
+  }
 //  msgBox.innerHTML = defaultMsgBox;
 }
 
@@ -638,8 +1067,9 @@ async function setGame() {
     `;
 
     activeAliado.attacks.forEach((attackMove, index) => {
-      document.getElementById(`botonAtaque${index}`).addEventListener("click", () => {
-        if (attack(activeAliado, attackMove, activeEnemigo)) {
+      document.getElementById(`botonAtaque${index}`).addEventListener("click", async () => {
+        document.querySelectorAll("#botonesAccion .button").forEach(button => button.disabled = true);
+        if (await attack(activeAliado, attackMove, activeEnemigo)) {
           completePlayerMove();
         }
       });
@@ -650,7 +1080,12 @@ async function setGame() {
     mostrarMochila(activeAliado);
   });
 
-  document.getElementById("botonPersonajes").addEventListener("click", characterSwitch);
+  document.getElementById("botonPersonajes").addEventListener("click", () => characterSwitch());
+
+  document.getElementById("botonHuir").addEventListener("click", () => {
+    document.getElementById("preguntaAccion").textContent = "No puedes huir, estás amarrado a un boiler.";
+    completePlayerMove();
+  });
 
   actionButtons.forEach(button => button.disabled = true);
 playTurn();

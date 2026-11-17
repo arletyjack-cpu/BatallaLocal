@@ -16,13 +16,14 @@
   </header>
 
   <!-- PERSONAJES -->
-  <section class="personajes" id="personajes" style="display: none;"></section>
+  <section class="menuGui" id="personajes" style="display: none;"></section>
 
   <!-- MOCHILA -->
-  <section class="mochila" id="mochila" style="display: none;"></section>
+  <section class="menuGui" id="mochila" style="display: none;"></section>
 
   <!-- BATTLE ARENA -->
   <section class="arena main-gui" id="arena">
+    <div class="arena-background" id="arenaBackground" aria-hidden="true"></div>
 
     <!-- BATTLE HUD -->
     <div class="hud" id="informacionBatalla">
@@ -30,7 +31,7 @@
       <!-- PLAYER 1 -->
       <div class="life life-player1" id="estadoAliado">
         <div class="health-bar">
-          <progress class="progress is-success" id="barraVidaAliado" value="50" max="150"></progress>
+          <progress class="progress is-success" id="barraVidaAliado" value="67" max="67"></progress>
           <div class="health-label">
             <span>Vida</span><span id="vidaAliado">--</span>
           </div>
@@ -41,14 +42,14 @@
       <!-- ROUND -->
       <div class="round has-text-centered" id="ronda">
         <span class="is-size-6" id="clima">Soleado</span>
-        <span class="has-text-weight-bold" id="numeroRonda">Ronda 2</span>
-        <small id="ventajaElemental">Agua x1.5 / Fuego x0.5</small>
+        <span class="has-text-weight-bold" id="numeroRonda">Ronda 67</span>
+        <small id="ventajaElemental">Todo x67</small>
       </div>
 
       <!-- PLAYER 2 -->
       <div class="life life-player2" id="estadoEnemigo">
         <div class="health-bar">
-          <progress class="progress is-success" id="barraVidaEnemigo" value="100" max="150"></progress>
+          <progress class="progress is-success" id="barraVidaEnemigo" value="67" max="67"></progress>
           <div class="health-label">
             <span>Vida</span><span id="vidaEnemigo">--</span>
           </div>
@@ -69,7 +70,7 @@
       <div class="card-content">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
           <strong id="nombreAliado">Gato Bobo</strong>
-          <span id="nivelAliado">Nv 10</span>
+          <span id="nivelAliado">Nv 67</span>
         </div>
         <div class="is-flex is-justify-content-space-between character-types" id="tiposAliado">
           <span class="tag" id="tipoAliado">--</span>
@@ -89,14 +90,14 @@
     <article class="card character-card enemigo" id="tarjetaEnemigo">
       <div class="card-content">
         <div class="is-flex is-justify-content-space-between is-align-items-center">
-          <span id="nivelEnemigo">Nv 11</span>
+          <span id="nivelEnemigo">Nv 67</span>
           <strong id="nombreEnemigo">Gato Tonto</strong>
         </div>
         <div class="is-flex is-justify-content-space-between character-types" id="tiposEnemigo">
           <span class="tag" id="tipoEnemigo">--</span>
         </div>
         <div class="is-flex is-justify-content-space-between is-align-items-center character-footer">
-          <span id="indicadoresEnemigo">🟢🟢🔘</span>
+          <span id="indicadoresEnemigo">🟢🟢🟢</span>
           <span id="propietarioEnemigo">Equipo Enemigo</span>
         </div>
       </div>
@@ -119,12 +120,16 @@
       <!-- BUTTON GRID -->
       <div class="column is-5" id="buttonColumn" style="max-height: 130px;">
         <div class="btns grid-4" id="botonesAccion">
-          <button class="button b pelear" id="botonPelear"><span>⚔ Pelear</span><span class="k">1</span></button>
-          <button class="button b pers" id="botonPersonajes"><span>👥 Personajes</span><span class="k">2</span></button>
-          <button class="button b moch" id="botonMochila"><span>🎒 Mochila</span><span class="k">3</span></button>
-          <button class="button b huir" id="botonHuir"><span>🏃 Huir</span><span class="k">4</span></button>
-          <button class="button b pelear" id="botonElegirPersonaje" style="display: none;"><span>💉 Aplicar</span><span class="k">1</span></button>
-          <button class="button b pers" id="botonCancelarMochila" style="display: none;"><span>🔙 Cancelar</span><span class="k">2</span></button>
+          <button class="button b" id="botonPelear" style="background-color: #ad2222;"><span>⚔ Pelear</span><span class="k">1</span></button>
+          <button class="button b" id="botonPersonajes" style="background-color: #16b646;"><span>👥 Personajes</span><span class="k">2</span></button>
+          <button class="button b" id="botonMochila" style="background-color: #b69d10;"><span>🎒 Mochila</span><span class="k">3</span></button>
+          <button class="button b" id="botonHuir" style="background-color: #1553af;"><span>🏃 Huir</span><span class="k">4</span></button>
+
+          <button class="button b pelear" id="botonElegirPersonaje" style="display: none; background-color: #16b646;"><span>✅ Aplicar</span><span class="k">1</span></button>
+          <button class="button b pers" id="botonCancelarMochila" style="display: none; background-color: #ad2222;"><span>❌ Cancelar</span><span class="k">2</span></button>
+
+          <button class="button b pelear" id="enviarPersonaje" style="display: none; background-color: #16b646;"><span>✅ Enviar Gato</span><span class="k">1</span></button>
+          <button class="button b pers" id="cancelarPersonaje" style="display: none; background-color: #ad2222;"><span>❌ Cancelar</span><span class="k">2</span></button>
         </div>
       </div>
     </div>

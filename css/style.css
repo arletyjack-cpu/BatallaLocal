@@ -58,7 +58,6 @@ body {
 
 .main-gui {
   position: relative;
-  width: 100%;
   aspect-ratio: 16 / 10;
 
   overflow: hidden;
@@ -72,11 +71,26 @@ body {
 ================================= */
 
 .arena {
-  /* Replace with your actual arena background */
-  background:
-    url("../images/arena.webp")
-    center / cover no-repeat,
-    linear-gradient(#85b5ed 0 50%, #5e873e 50%);
+  background: linear-gradient(#85b5ed 0 50%, #5e873e 50%);
+}
+
+.arena-background {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: url("../images/arena.webp") center / cover no-repeat;
+}
+
+.arena-background.clima-soleado {
+  filter: saturate(1.5);
+}
+
+.arena-background.clima-lluvioso {
+  filter: saturate(0.4);
+}
+
+.arena-background.clima-caluroso {
+  filter: sepia(0.4) saturate(1.15);
 }
 
 
@@ -210,11 +224,31 @@ body {
 
 .player-cat {
   position: absolute;
+  z-index: 1;
   width: 100%;
   max-height: 100%;
 
   left: 9%;
   top: 17%;
+}
+
+.player-cat.cambio-aliado {
+  animation: cambioAliado 600ms ease-in forwards;
+}
+
+@keyframes cambioAliado {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(50px); }
+  100% { transform: translateX(-120%); }
+}
+
+.player-cat.entrada-aliado {
+  animation: entradaAliado 600ms ease-out both;
+}
+
+@keyframes entradaAliado {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(0); }
 }
 
 .player-image {
@@ -240,11 +274,31 @@ body {
 
 .enemy-cat {
   position: absolute;
+  z-index: 1;
   width: 100%;
   max-height: 100%;
 
   right: -61%;
   bottom: 5%;
+}
+
+.enemy-cat.cambio-enemigo {
+  animation: cambioEnemigo 600ms ease-in forwards;
+}
+
+@keyframes cambioEnemigo {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-50px); }
+  100% { transform: translateX(120%); }
+}
+
+.enemy-cat.entrada-enemigo {
+  animation: entradaEnemigo 600ms ease-out both;
+}
+
+@keyframes entradaEnemigo {
+  from { transform: translateX(120%); }
+  to { transform: translateX(0); }
 }
 
 .enemy-image {
@@ -255,6 +309,11 @@ body {
 
   border-radius: 200px;
   transform-origin: center;
+}
+
+.enemy-image.derrotado {
+  filter: grayscale(1);
+  transition: filter 1s ease;
 }
 
 .enemy-overlay {
@@ -394,7 +453,7 @@ body {
 
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
 .grid-4 {
@@ -434,26 +493,15 @@ body {
   overflow: hidden;
 }
 
-.btns .button:hover {
+.btns .button:hover:not(:disabled) {
   filter: brightness(1.1);
   color: white;
 }
 
-.pelear {
-  background: #e94449;
-}
-
-.pers {
-  background: #f8c92e;
-  color: #17213a !important;
-}
-
-.moch {
-  background: #187b4c;
-}
-
-.huir {
-  background: #1b2236;
+.btns .button:disabled {
+  filter: brightness(0.65);
+  opacity: 1;
+  color: rgb(255, 255, 255);
 }
 
 .k {
@@ -494,6 +542,65 @@ body {
 .hit-shake {
   animation: hitShake 1s ease-in-out;
 }
+
+.attack-effect {
+  position: absolute;
+  z-index: 4;
+  font-size: clamp(24px, 5vw, 56px);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.attack-contact {
+  animation: attackContact 700ms ease-in-out forwards;
+}
+
+@keyframes attackContact {
+  0%, 100% { transform: translateX(0); }
+  45%, 55% { transform: translateX(var(--attack-travel-x)); }
+}
+
+.attack-hand-contact {
+  animation: attackHandContact 320ms ease-in forwards;
+}
+
+@keyframes attackHandContact {
+  from { transform: translate(-50%, -50%); }
+  to { transform: translate(var(--attack-travel-x), 0) translate(-50%, -50%); }
+}
+
+.attack-projectile {
+  animation: attackProjectile 520ms ease-in forwards;
+}
+
+@keyframes attackProjectile {
+  from { transform: translate(-50%, -50%); }
+  to {
+    transform: translate(var(--attack-travel-x), var(--attack-travel-y)) translate(-50%, -50%);
+  }
+}
+
+.attack-particle {
+  animation: attackParticle 820ms linear forwards;
+}
+
+@keyframes attackParticle {
+  from { transform: translate(-50%, -50%); }
+  to {
+    transform: translate(var(--particle-x), var(--particle-y)) translate(-50%, -50%);
+  }
+}
+
+.attack-particle-1 { --particle-x: 0px; --particle-y: -480px; }
+.attack-particle-2 { --particle-x: 340px; --particle-y: -340px; }
+.attack-particle-3 { --particle-x: 480px; --particle-y: 0px; }
+.attack-particle-4 { --particle-x: 340px; --particle-y: 340px; }
+.attack-particle-5 { --particle-x: 0px; --particle-y: 480px; }
+.attack-particle-6 { --particle-x: -340px; --particle-y: 340px; }
+.attack-particle-7 { --particle-x: -480px; --particle-y: 0px; }
+.attack-particle-8 { --particle-x: -340px; --particle-y: -340px; }
 
 /* =================================
    SMALL SCREENS
@@ -568,23 +675,20 @@ body {
 
 }
 
-.mochila {
-  width: 100%;
-}
+/*-------------------menuGui-------------------*/
 
-.mochila-ventana {
-  width: 100%;
-  font-family: Arial, sans-serif;
-  background: #1b2236;
+.menuGui-ventana {
+  background: #e5e9f2;
   border: 4px solid #344365;
   border-radius: 18px;
   box-shadow: 0 0 0 3px #141b2d;
   color: #111827;
 }
 
-.mochila-titulo {
+.menuGui-titulo {
   display: flex;
   align-items: center;
+  height: 10%;
   gap: 10px;
   padding: 12px 16px;
   background: #f9ce36;
@@ -596,7 +700,7 @@ body {
   color: #111827;
 }
 
-.mochila-cuerpo {
+.menuGui-cuerpo {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
@@ -604,8 +708,9 @@ body {
   background: #e5e9f2;
 }
 
-.mochila-detalle {
+.menuGui-detalle {
   display: flex;
+  height: auto;
   flex-direction: column;
   gap: 8px;
   padding: 14px;
@@ -615,31 +720,31 @@ body {
   font-size: 0.9rem;
 }
 
-.mochila-detalle-cabecera {
+.menuGui-detalle-cabecera {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.mochila-detalle-nombre {
+.menuGui-detalle-nombre {
   margin: 0;
   font-size: 1.4rem;
   font-weight: 800;
   line-height: 1.1;
 }
 
-.mochila-detalle-efecto,
-.mochila-detalle-descripcion {
+.menuGui-detalle-efecto,
+.menuGui-detalle-descripcion {
   margin: 0;
 }
 
-.mochila-detalle-reglas {
+.menuGui-detalle-reglas {
   margin: 0;
   padding-left: 18px;
   list-style: disc;
 }
 
-.mochila-detalle-nota {
+.menuGui-detalle-nota {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -651,7 +756,7 @@ body {
   font-weight: 700;
 }
 
-.mochila-icono {
+.menuGui-icono {
   flex: none;
   display: flex;
   align-items: center;
@@ -664,17 +769,17 @@ body {
   border-radius: 10px;
 }
 
-.mochila-icono.pocion-normal { background: #fbd5e3; }
-.mochila-icono.super-pocion  { background: #fde1c2; }
-.mochila-icono.hiper-pocion  { background: #e4e4e8; }
+.menuGui-icono.pocion-normal { background: #fbd5e3; }
+.menuGui-icono.super-pocion  { background: #fde1c2; }
+.menuGui-icono.hiper-pocion  { background: #e4e4e8; }
 
-.mochila-lista {
+.menuGui-lista {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.mochila-item {
+.menuGui-item {
   position: relative;
   display: flex;
   align-items: center;
@@ -690,7 +795,7 @@ body {
   color: #111827;
 }
 
-.mochila-item-flecha {
+.menuGui-item-flecha {
   position: absolute;
   left: 8px;
   visibility: hidden;
@@ -698,48 +803,48 @@ body {
   font-size: 0.9rem;
 }
 
-.mochila-item-info {
+.menuGui-item-info {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.mochila-item-nombre {
+.menuGui-item-nombre {
   font-size: 1.1rem;
   font-weight: 800;
 }
 
-.mochila-item-efecto {
+.menuGui-item-efecto {
   font-size: 0.85rem;
 }
 
-.mochila-item-cantidad {
+.menuGui-item-cantidad {
   font-size: 1.5rem;
   font-weight: 800;
 }
 
-.mochila-item.seleccionado {
+.menuGui-item.seleccionado {
   background: #fdf1b8;
   box-shadow: 0 0 0 3px #f9ce36;
 }
 
-.mochila-item.seleccionado .mochila-item-flecha {
+.menuGui-item.seleccionado .menuGui-item-flecha {
   visibility: visible;
 }
 
-.mochila-item.agotado {
+.menuGui-item.agotado {
   background: #cfd4e0;
   border-style: dashed;
   color: #777;
   cursor: not-allowed;
 }
 
-.mochila-item.agotado .mochila-icono {
+.menuGui-item.agotado .menuGui-icono {
   opacity: 0.5;
   filter: grayscale(1);
 }
 
-.mochila-item-etiqueta {
+.menuGui-item-etiqueta {
   padding: 2px 8px;
   background: #1b2236;
   border-radius: 6px;
@@ -748,7 +853,7 @@ body {
   font-weight: 800;
 }
 
-.mochila-pie {
+.menuGui-pie {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
   gap: 10px;
@@ -757,7 +862,7 @@ body {
   border-radius: 0 0 12px 12px;
 }
 
-.mochila-mensaje {
+.menuGui-mensaje {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -767,24 +872,24 @@ body {
   border-radius: 10px;
 }
 
-.mochila-mensaje small {
+.menuGui-mensaje small {
   font-weight: 700;
   color: #263d79;
 }
 
-.mochila-mensaje p {
+.menuGui-mensaje p {
   margin: 0;
   font-size: clamp(16px, 2vw, 27px);
   font-weight: 800;
 }
 
-.mochila-acciones {
+.menuGui-acciones {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.mochila-boton {
+.menuGui-boton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -797,19 +902,234 @@ body {
   cursor: pointer;
 }
 
-.mochila-boton.elegir {
+.menuGui-boton.elegir {
   background: #e94449;
   color: #fff;
 }
 
-.mochila-boton.cancelar {
+.menuGui-boton.cancelar {
   background: #fff;
   color: #111827;
 }
 
 @media (max-width: 600px) {
-  .mochila-cuerpo,
-  .mochila-pie {
+  .menuGui-cuerpo,
+  .menuGui-pie {
     grid-template-columns: 1fr;
+  }
+}
+
+/*-------------------PERSONAJES-------------------*/
+
+#personajes.personajes-pantalla {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: auto;
+  padding: clamp(16px, 4vw, 48px);
+  color: #fff;
+  background: radial-gradient(ellipse at top, #344d62, #111923 72%);
+}
+
+.personajes-ventana {
+  max-width: 1100px;
+  min-height: 100%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.personajes-encabezado,
+.personajes-pie {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 20px 24px;
+  border: 1px solid #ffffff35;
+  border-radius: 18px;
+  background: #101923dd;
+}
+
+.personajes-retratos {
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+}
+
+.personajes-retratos img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border: 3px solid black;
+  border-radius: 50%;
+  background: #465566;
+}
+
+.personajes-retratos img + img {
+  margin-left: -20px;
+}
+
+.personajes-afiliacion {
+  margin: 0;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.personajes-subtitulo {
+  margin: 5px 0 0;
+  color: #c1cedb;
+}
+
+.personajes-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+  gap: 18px;
+}
+
+.personaje-tarjeta {
+  overflow: hidden;
+  padding: 0;
+  color: white;
+  text-align: left;
+  border: 3px solid #1b2236;
+  border-radius: 16px;
+  background: #f5f7fb;
+  cursor: pointer;
+  transition: transform .18s, border-color .18s;
+}
+
+.personaje-tarjeta.combate,
+.personaje-tarjeta.debilitado {
+  background: #d6d6d6;
+  cursor: not-allowed;
+}
+
+.personaje-tarjeta:hover:not(:disabled),
+.personaje-tarjeta.seleccionado {
+  transform: translateY(-3px);
+  border-color: #ffe08a;
+  box-shadow: 0 0 0 2px #ffe08a55;
+}
+
+.personaje-tarjeta:disabled {
+  cursor: not-allowed;
+}
+
+.personaje-estado {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  font-weight: 700;
+}
+
+.personaje-retrato {
+  position: relative;
+  height: 275px;
+  overflow: hidden;
+  border: 3px solid #1b2236;
+  border-radius: 12px;
+}
+
+.personaje-retrato::after {
+  position: absolute;
+  inset: 0;
+}
+
+.personaje-retrato img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.personaje-retrato.debilitado::after {
+  content: "💀";
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  font-size: clamp(3rem, 8vw, 5rem);
+  text-shadow: 0 2px 6px #000;
+}
+
+.personaje-retrato.debilitado img {
+  filter: grayscale(1);
+}
+
+.personaje-datos {
+  padding: 8px 16px 16px;
+}
+
+.personaje-datos h3 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+
+.personaje-ps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: #d5deea;
+}
+
+.personaje-vida {
+  width: 100%;
+  height: 10px;
+  accent-color: #68d391;
+}
+
+.personajes-pie {
+  justify-content: space-between;
+}
+
+.personajes-mensaje {
+  margin: 0;
+  color: #e0e8f0;
+}
+
+.personajes-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.personajes-acciones button {
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#enviarPersonaje {
+  color: #17212b;
+  background: #ffe08a;
+}
+
+#enviarPersonaje:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+#cancelarPersonaje {
+  color: white;
+  background: #465566;
+}
+
+@media (max-width: 600px) {
+  .personajes-encabezado {
+    padding: 15px;
+  }
+
+  .personajes-retratos img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .personajes-pie {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .personajes-acciones button {
+    flex: 1;
   }
 }
