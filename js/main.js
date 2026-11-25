@@ -5,11 +5,13 @@ const apiTimeout = 1000;
 
 let gameOver = false;
 let whoseTurn = "Aliado";
-let mochilaMenuState = null;
+let matchDelayMultiplier = 1;
+
 let activeAliado;
 let activeEnemigo;
 let enemySwitchPromise = Promise.resolve();
 let climate = "";
+let mochilaMenuState = null;
 let preguntaAccion = "";
 
 const items = {
@@ -22,50 +24,68 @@ const items = {
 };
 const teamInventories = { Aliado: {}, Enemigo: {} };
 
-const characterType = ["Fuego", "Agua", "Planta"]
+const characterType = ["Fuego", "Agua", "Planta", "Pelea", "Volador", "Piedra"]
 const regularAttackMoves = [
-  { name: "Porrazo", type: "Normal", category: "contact", pp: 25, multiplier: 2 },
-  { name: "Tortazo vital", type: "Normal", category: "contact", pp: 15, multiplier: 2.5 },
-  { name: "Ataque currado", type: "Normal", category: "contact", pp: 20, multiplier: 3 }
+  { name: "Porrazo", type: "Normal", accuracy: 10, category: "contact", pp: 25, multiplier: 2 },
+  { name: "Tortazo vital", type: "Normal", accuracy: 10, category: "contact", pp: 15, multiplier: 2.5 },
+  { name: "Ataque currado", type: "Normal", accuracy: 10, category: "contact", pp: 20, multiplier: 3 }
 ];
 
-const attackEmojis = { Normal: "✊", Planta: "🍃", Fuego: "🔥", Agua: "💦" };
+const typeEffectiveness = {
+  Fuego: { Planta: 2.5, Agua: 0.75, Fuego: 1, Pelea: 1, Volador: 1, Piedra: 1, Normal: 1 },
+  Planta: { Agua: 2.5, Fuego: 0.75, Planta: 1, Pelea: 1, Volador: 1, Piedra: 1, Normal: 1 },
+  Agua: { Fuego: 2.5, Planta: 0.75, Agua: 1, Pelea: 1, Volador: 1, Piedra: 1, Normal: 1 },
+  Pelea: { Planta: 1, Agua: 1, Fuego: 1, Pelea: 1, Volador: 0.75, Piedra: 2.5, Normal: 1 },
+  Volador: { Agua: 1, Fuego: 1, Planta: 1, Pelea: 2.5, Volador: 1, Piedra: 0.75, Normal: 1 },
+  Piedra: { Fuego: 1, Planta: 1, Agua: 1, Pelea: 0.75, Volador: 2.5, Piedra: 1, Normal: 1 },
+  Normal: { Fuego: 1, Planta: 1, Agua: 1, Pelea: 1, Volador: 1, Piedra: 1, Normal: 1 }
+};
+
+const emojiTypes = { Normal: "✊", Planta: "🍃", Fuego: "🔥", Agua: "💦", Pelea : "🤜", Volador : "💨", Piedra : "🪨", Healing : "💊" };
 const typedAttackMoves = {
   Fuego: [
-    { name: "Llamarada", type: "Fuego", category: "ranged", pp: 8, multiplier: 2.5 },
-    { name: "Bola de fuego", type: "Fuego", category: "ranged", pp: 15, multiplier: 2.25 },
-    { name: "Explosión ígnea", type: "Fuego", category: "aoe", pp: 5, multiplier: 2.75 }
+    { name: "Llamarada", type: "Fuego", accuracy: 95, category: "ranged", pp: 8, multiplier: 2.5 },
+    { name: "Bola de fuego", type: "Fuego", accuracy: 100, category: "ranged", pp: 15, multiplier: 2.25 },
+    { name: "Explosión ígnea", type: "Fuego", accuracy: 80, category: "aoe", pp: 5, multiplier: 2.75 }
   ],
   Agua: [
-    { name: "Chorro de agua", type: "Agua", category: "ranged", pp: 25, multiplier: 2.25 },
-    { name: "Tsunami", type: "Agua", category: "aoe", pp: 3, multiplier: 3 },
-    { name: "67 de agua", type: "Agua", category: "contact", pp: 10, multiplier: 2.5 }
+    { name: "Chorro de agua", type: "Agua", accuracy: 95, category: "ranged", pp: 25, multiplier: 2.25 },
+    { name: "Tsunami", type: "Agua", accuracy: 80, category: "aoe", pp: 3, multiplier: 3 },
+    { name: "67 de agua", type: "Agua", accuracy: 95, category: "contact", pp: 10, multiplier: 2.5 }
   ],
   Planta: [
-    { name: "Latigazo de lianas", type: "Planta", category: "contact", pp: 10, multiplier: 2.5 },
-    { name: "Hoja afilada", type: "Planta", category: "ranged", pp: 25, multiplier: 2.25 },
-    { name: "Onda vital", type: "Planta", category: "aoe", pp: 5, multiplier: 2.75 }
+    { name: "Latigazo de lianas", type: "Planta", accuracy: 100, category: "contact", pp: 10, multiplier: 2.5 },
+    { name: "Hoja afilada", type: "Planta", accuracy: 95, category: "ranged", pp: 25, multiplier: 2.25 },
+    { name: "Onda vital", type: "Planta", accuracy: 80, category: "aoe", pp: 5, multiplier: 2.75 }
+  ],
+  Pelea: [
+    { name: "Zapesote", type: "Pelea", accuracy: 100, category: "contact", pp: 8, multiplier: 2.5 },
+    { name: "Chiricuazo", type: "Pelea", accuracy: 95, category: "contact", pp: 15, multiplier: 2.25 },
+    { name: "Quebradora", type: "Pelea", accuracy: 80, category: "contact", pp: 5, multiplier: 2.75 }
+  ],
+  Volador: [
+    { name: "Ciudad Juarez", type: "Volador", accuracy: 90, category: "ranged", pp: 25, multiplier: 2.25 },
+    { name: "Polvadero", type: "Volador", accuracy: 90, category: "contacto", pp: 3, multiplier: 3 },
+    { name: "Rafaga de pura tierra", type: "Volador", accuracy: 100, category: "aoe", pp: 10, multiplier: 2.5 }
+  ],
+  Piedra: [
+    { name: "Bomba de tubo", type: "Piedra", accuracy: 95, category: "aoe", pp: 10, multiplier: 2.5 },
+    { name: "Apiedrada", type: "Piedra", accuracy: 100, category: "ranged", pp: 25, multiplier: 2.25 },
+    { name: "Meteoro casero", type: "Piedra", accuracy: 80, category: "contact", pp: 5, multiplier: 3 }
   ]
 };
 
 
-const randomNames = ["Dem", "Dani", "Arlet", "Adalberto", "5000", "Tonto", "Gato", "Gatillo", "Feline", "Cesaron", "Victorin"];
-const insults = ["Silly", "Stupid", "Idiotic", "Moronic", "Baboso/e", "Taradeitor 2000", "Tonoto", "Smelly", "Loser"];
+const randomNames = ["Dem", "Dani", "Arlet", "Alberto, no Adalberto", "5000", "Tonto", "Gato", "Gatillo", "Feline", "Cesaron", "Victorin"];
+const insults = ["Knob", "Blockhead", "Silly", "Stupid", "Idiotic", "Moronic", "Baboso/e", "Taradeitor 2000", "Tonoto", "Smelly", "Loser"];
 const randomInsultFallback = () => insults[Math.floor(Math.random() * insults.length)];
 const randomAge = () => Math.floor(Math.random() * 21) + 50;
 
-const typeEffectiveness = {
-  Fuego: { Planta: 2.5, Agua: 0.75, Fuego: 1, Normal: 1 },
-  Planta: { Agua: 2.5, Fuego: 0.75, Planta: 1, Normal: 1 },
-  Agua: { Fuego: 2.5, Planta: 0.75, Agua: 1, Normal: 1 },
-  Normal: { Fuego: 1, Planta: 1, Agua: 1, Normal: 1  }
-};
-
 const climates = ["Soleado", "Lluvioso", "Caluroso"];
 const ClimateMultiplier = {
-  Soleado: { Fuego: 1.25, Agua: 0.9, Planta: 1.5, Normal: 1 },
-  Lluvioso: { Fuego: 0.8, Agua: 1.5, Planta: 1.25, Normal: 1 },
-  Caluroso: { Fuego: 1.5, Agua: 0.9, Planta: 0.75, Normal: 1 }
+  Soleado: { Fuego: 1.25, Agua: 0.9, Planta: 1.5, Pelea: 1.3, Volador: 0.8, Piedra: 0.9, Normal: 1 },
+  Lluvioso: { Fuego: 0.8, Agua: 1.5, Planta: 1.25, Pelea: 1.1, Volador: 1.25, Piedra: 0.8, Normal: 1 },
+  Caluroso: { Fuego: 1.5, Agua: 0.9, Planta: 0.75, Pelea: 0.75, Volador: 1, Piedra: 1.3, Normal: 1 }
 };
 
 const msgBox = document.getElementById("textColumn")
@@ -90,13 +110,45 @@ const cancelarMochila = document.getElementById("botonCancelarMochila")
 const enviarPersonaje = document.getElementById("enviarPersonaje")
 const cancelarPersonaje = document.getElementById("cancelarPersonaje")
 
+const reiniciar = document.getElementById("reiniciar")
+const salir = document.getElementById("salir")
+
 const actionButtons = [botonPelear, botonPersonajes, botonMochila, botonHuir];
 const mochilaButtons = [elegirPersonaje, cancelarMochila];
 const personajeButtons = [enviarPersonaje, cancelarPersonaje]
+const endgameButtons = [reiniciar, salir]
 
 //--------------------------------------------------------FUNCTIONS
 
+async function killTeam(team, message) {
+  team.forEach(character => {
+    character.health = 0;
+  });
+
+  const affiliation = team[0].afiliation;
+  const activeCharacter = affiliation === "Aliado" ? activeAliado : activeEnemigo;
+  if (activeCharacter) loadPlayerData(activeCharacter);
+
+  const endgameMessage = message;
+  await endGame(endgameMessage);
+}
+
 //-------CREATE STUFF 
+
+function mainScreen() {
+  const portraitsAliados = window.equipoAliado.slice(0, 3).map((character, index) => {
+    const portraitIds = ["firstPortrait", "secondPortrait", "thirdPortrait"];
+    return `<span class="personajes-retratos-main-screen" id="${portraitIds[index]}"><img src="${character.portrait}" alt="Retrato de ${character.firstName}"></span>`;
+  }).join("");
+
+  const portraitsEnemigos = window.equipoEnemigo.slice(0, 3).map((character, index) => {
+    const portraitIds = ["firstPortrait", "secondPortraitPartTwo", "thirdPortrait"];
+    return `<span class="personajes-retratos-main-screen" id="${portraitIds[index]}"><img src="${character.portrait}" alt="Retrato de ${character.firstName}"></span>`;
+  }).join("");
+
+  document.getElementById("Aliados").innerHTML = `${portraitsAliados}`
+  document.getElementById("Enemigos").innerHTML = `${portraitsEnemigos}`
+}
 
 function randomClimate() {
   const selectedClimate = climates[Math.floor(Math.random() * climates.length)];
@@ -161,18 +213,18 @@ async function loadPortraitFallback(name) {
 
       timeoutId = setTimeout(() => {
         console.error("Character portrait request timed out");
-        finish("images/placeholder.webp");
+        finish("resources/placeholder.webp");
       }, apiTimeout);
       image.onload = () => finish(portraitUrl);
       image.onerror = () => {
         console.error("Unable to load character portrait");
-        finish("images/placeholder.webp");
+        finish("resources/placeholder.webp");
       };
       image.src = portraitUrl;
     });
   } catch (error) {
     console.error("Unable to load character portrait:", error);
-    return "images/placeholder.webp";
+    return "resources/placeholder.webp";
   }
 }
 
@@ -188,15 +240,15 @@ async function generateUser() {
 
     const data = await response.json();
     const user = data.results[0];
-    if (!user?.name?.first || typeof user.dob?.age !== "number") {
-      throw new Warning("Invalid user data received");
+    if (user.dob.age < 40) {
+      user.dob.age = user.dob.age + 35;
     }
 
     return { name: user.name.first, age: user.dob.age };
   }, generateUserInfoFallback, "Error generating user name and age");
 
   const insultPromise = requestWithFallback(async signal => {
-    const response = await fetch("https://insult.mattbas.org/api/insult", { signal });
+    const response = await fetch("https://insult.mattbas.org/api/adjective", { signal });
     if (!response.ok) {
       throw new Warning("Failed to fetch insult");
     }
@@ -214,10 +266,13 @@ async function generateUser() {
     loadPortraitFallback(user.name)
   ]);
 
+  const speed = Math.max(51, user.age < 50 ? user.age * 2 : user.age);
+
   return {
     firstName: `${insult.charAt(0).toUpperCase()}${insult.slice(1)} ${user.name}`,
     age: user.age,
-    portrait
+    portrait,
+    speed
   };
 }
 
@@ -229,7 +284,7 @@ function assignAttacks(character) {
 
     for (let i = 0; i < 2; i++) {
       const move = available.splice(Math.floor(Math.random() * available.length), 1)[0];
-      selected.push({ ...move, maxPP: move.pp });
+      selected.push({ ...move, category: move.category, maxPP: move.pp });
     }
 
     return selected;
@@ -287,17 +342,19 @@ function generateInventory() {
 
 //------------UPDATE STUFF
 
-function updateHud(round, climate) {
+function updateHud(climate) {
   document.getElementById("clima").textContent = `Dia ${climate}`;
-  document.getElementById("numeroRonda").textContent = "Ronda " + round;
-  document.getElementById("ventajaElemental").textContent = `(Fuego x${ClimateMultiplier[climate].Fuego}, Agua x${ClimateMultiplier[climate].Agua}, Planta x${ClimateMultiplier[climate].Planta})`;
+  document.getElementById("ventajaElemental").textContent = `(Fuego x${ClimateMultiplier[climate].Fuego}, Agua x${ClimateMultiplier[climate].Agua}, Planta x${ClimateMultiplier[climate].Planta}<br>Pelea x${ClimateMultiplier[climate].Pelea}, Volador x${ClimateMultiplier[climate].Volador}, Piedra x${ClimateMultiplier[climate].Piedra})`;
 }
 
 function loadPlayerData(personaje) {
   team = personaje.afiliation;
-  const teamCharacters = window[`equipo${team}`] || [];
-  document.getElementById("barraVida" + team).max = personaje.initialHealth;
-  document.getElementById("barraVida" + team).value = personaje.health;
+  const teamCharacters = window[`equipo${team}`];
+  const healthProgress = document.getElementById("barraVida" + team);
+  healthProgress.max = personaje.initialHealth;
+  healthProgress.value = personaje.health;
+  const healthRatio = Math.max(0, Math.min(1, personaje.health / personaje.initialHealth));
+  healthProgress.parentElement.style.setProperty("--health-ratio", healthRatio);
   document.getElementById("vida" + team).textContent = `${personaje.health} / ${personaje.initialHealth}`;
   document.getElementById("indicadores" + team).textContent = teamCharacters
     .map(character => character.health > 0 ? "🟢" : "🔘")
@@ -307,6 +364,11 @@ function loadPlayerData(personaje) {
   document.getElementById("tipo" + team).textContent = personaje.type;
   document.getElementById("nivel" + team).textContent = "Nivel " + personaje.age;
   document.getElementById("imagen" + team).src = personaje.portrait;
+}
+
+function animateHealthBarDamage(afiliation) {
+  const healthBar = document.getElementById(`barraVida${afiliation}`).closest(".health-bar");
+  void runAttackAnimation(healthBar, "taking-damage");
 }
 
 function manageButtons(buttons, toggle) {
@@ -344,7 +406,7 @@ function createAttackEffect(emoji, point, extraClass = "") {
 }
 
 function createEmojiSplash(type, point, directions) {
-  const emoji = attackEmojis[type] || attackEmojis.Normal;
+  const emoji = emojiTypes[type];
   return Promise.all(directions.map(async direction => {
     const particle = createAttackEffect(emoji, point, `attack-particle-${direction}`);
     await runAttackAnimation(particle, "attack-particle", true);
@@ -386,12 +448,14 @@ async function attackAnimation(attacker, attackMove, defender, onImpact) {
   const target = getArenaPoint(defenderImage);
   const x = target.x - start.x;
   const y = target.y - start.y;
-  const emoji = attackEmojis[attackMove.type] || attackEmojis.Normal;
+  const emoji = emojiTypes[attackMove.type];
 
   const applyImpact = () => {
-    onImpact();
-    const defenderCanvas = document.getElementById(`canvas${defender.afiliation}`);
-    void runAttackAnimation(defenderCanvas, "hit-shake");
+    if (onImpact) {
+      onImpact();
+      const defenderCanvas = document.getElementById(`canvas${defender.afiliation}`);
+      void runAttackAnimation(defenderCanvas, "hit-shake");
+    }
   };
 
   if (attackMove.category === "contact") {
@@ -428,17 +492,67 @@ async function attackAnimation(attacker, attackMove, defender, onImpact) {
   projectile.remove();
 }
 
-function endGame(message) {
+async function endGame(message) {
+  if (gameOver) return;
   gameOver = true;
+
+  await new Promise((resolve) => setTimeout(resolve, 2000 * matchDelayMultiplier));
+
+  const losingSide = window.equipoAliado.every(character => character.health <= 0)
+    ? "Aliado"
+    : "Enemigo";
+  const losingHud = document.getElementById(`estado${losingSide}`);
+  const losingCanvas = document.getElementById(`canvas${losingSide}`);
+  const losingCard = document.getElementById(`tarjeta${losingSide}`);
+  losingHud.classList.add("endgame-loser");
+  losingCanvas.classList.add("endgame-loser");
+  losingCard.classList.add("endgame-loser");
+
   manageButtons(personajeButtons, false);
   manageButtons(mochilaButtons, false);
-  manageButtons(actionButtons, true);
+  manageButtons(actionButtons, false);
+  btnsAccion.classList.replace("grid-4", "grid-2");
+  manageButtons(endgameButtons, true);
 
-  for (const button of actionButtons) {
-    button.disabled = true;
-  }
+  endgameButtons.forEach(button => button.disabled = false);;
 
-///////////////////////////////////////////////////////////////////////GAMEOVER SCREEN
+  document.getElementById("preguntaAccion").textContent = `${message}`;
+
+  await Promise.all([
+    runAttackAnimation(document.getElementById("canvasAliado"), "endgame-exit-left", true),
+    runAttackAnimation(document.getElementById("canvasEnemigo"), "endgame-exit-right", true),
+    runAttackAnimation(document.getElementById("tarjetaAliado"), "endgame-exit-left", true),
+    runAttackAnimation(document.getElementById("tarjetaEnemigo"), "endgame-exit-right", true),
+    runAttackAnimation(document.getElementById("estadoAliado"), "endgame-exit-up", true),
+    runAttackAnimation(document.getElementById("estadoEnemigo"), "endgame-exit-up", true),
+    runAttackAnimation(document.getElementById("ronda"), "endgame-exit-up", true),
+  ]);
+
+  mainScreen();
+  const gameOverTitle = document.createElement("img");
+  gameOverTitle.className = "main-title";
+  gameOverTitle.src = "resources/GameOver.webp";
+  gameOverTitle.alt = "";
+
+  const losingPortraits = document.getElementById(losingSide === "Aliado" ? "Aliados" : "Enemigos");
+  const allyPortraits = Array.from(document.querySelectorAll("#Aliados .personajes-retratos-main-screen"));
+  const enemyPortraits = Array.from(document.querySelectorAll("#Enemigos .personajes-retratos-main-screen"));
+  const endgameScreen = document.createElement("div");
+  endgameScreen.id = "endgameScreen";
+  endgameScreen.className = "endgame-screen";
+  losingPortraits.classList.add("endgame-loser");
+  endgameScreen.append(
+    gameOverTitle,
+    document.getElementById("Aliados"),
+    document.getElementById("Enemigos")
+  );
+  arena.appendChild(endgameScreen);
+
+  await Promise.all([
+    runAttackAnimation(gameOverTitle, "endgame-main-title-enter", true),
+    ...allyPortraits.map(portrait => runAttackAnimation(portrait, "endgame-portrait-ally-enter", true)),
+    ...enemyPortraits.map(portrait => runAttackAnimation(portrait, "endgame-portrait-enemy-enter", true))
+  ]);
 }
 
 function handleMorido(character) {
@@ -484,6 +598,14 @@ function handleMorido(character) {
 
 //------------------ATTACK LOGIC
 
+function doesAttackLand(attacker, attackMove) {
+  const accuracy = Math.max(0, Math.min(100, Number(attackMove.accuracy)));
+  if (Math.random() * 100 < accuracy) return true;
+
+  const speedChance = Math.max(0, Math.min(100, Number(attacker.speed)));
+  return Math.random() * 100 < speedChance;
+}
+
 async function attack(attacker, attackMove, defender) {
   if (whoseTurn !== attacker.afiliation || defender.health <= 0 || attackMove.pp <= 0) return false;
 
@@ -491,10 +613,24 @@ async function attack(attacker, attackMove, defender) {
   const damage = Math.round((attacker.attack * attackMove.multiplier * ClimateMultiplier[climate][attackMove.type] * effectiveness) / (defender.defense * 0.5));
   attackMove.pp = Math.max(attackMove.pp - 1, 0);
 
+  if (!doesAttackLand(attacker, attackMove)) {
+    await attackAnimation(attacker, attackMove, defender, null);
+    msgBox.innerHTML = defaultMsgBox;
+    msgAccion = document.getElementById("mensajeAccion");
+    document.getElementById("turnoActual").textContent = `Equipo ${whoseTurn}`;
+    document.getElementById("instruccionesAccion").remove();
+    document.getElementById("preguntaAccion").textContent = `${attacker.firstName} usó ${attackMove.name}, pero falló.`;
+    loadPlayerData(attacker);
+    loadPlayerData(defender);
+    console.log(`${attacker.firstName} usó ${attackMove.name} contra ${defender.firstName}, pero falló.`);
+    return true;
+  }
+
   await attackAnimation(attacker, attackMove, defender, () => {
     console.log(`${attacker.firstName} usa ${attackMove.name} contra ${defender.firstName}, infligiendo ${damage} de daño.`);
     defender.health = Math.max(defender.health - damage, 0);
     console.log(`${defender.firstName} ahora tiene ${defender.health} de salud.`);
+    animateHealthBarDamage(defender.afiliation);
 
     msgBox.innerHTML = defaultMsgBox;
     msgAccion = document.getElementById("mensajeAccion");
@@ -520,7 +656,7 @@ async function attack(attacker, attackMove, defender) {
 
 //------------------ITEMS
 
-function useItem(item, personaje) {
+async function useItem(item, personaje) {
   const inventory = teamInventories[personaje.afiliation];
   const data = items[item];
   if (whoseTurn !== personaje.afiliation || !data || !inventory || inventory[item] < 1) return false;
@@ -547,6 +683,11 @@ function useItem(item, personaje) {
   document.getElementById("preguntaAccion").textContent = personaje.afiliation === "Aliado"
     ? `Usaste ${data.name} en tu aliado ${personaje.firstName}.`
     : `${personaje.firstName} recibió ${data.name}.`;
+  const targetLocation = getArenaPoint(document.getElementById(`imagen${personaje.afiliation}`))
+  const splash = createEmojiSplash("Healing", targetLocation, [1, 2, 3, 4, 5, 6, 7, 8]);
+  await splash;
+  const activeCharacter = personaje.afiliation === "Aliado" ? activeAliado : activeEnemigo;
+  if (activeCharacter && activeCharacter !== personaje) loadPlayerData(activeCharacter);
   return true;
 }
 
@@ -591,7 +732,7 @@ function characterSwitch(forced = false) {
 
   arena.style.display = "none";
   const personajes = document.getElementById("personajes");
-  const team = window.equipoAliado || [];
+  const team = window.equipoAliado;
   if (!personajes) return;
 
   const statusOf = character => character.health <= 0
@@ -623,7 +764,7 @@ function characterSwitch(forced = false) {
         ${team.map((character, index) => {
           const status = statusOf(character);
           if (status.state === "disponible"){tag = `tag is-success`} else if (status.state === "combate"){tag = `tag is-warning`} else {tag = `tag is-danger`}
-          if (character.type === "Planta"){typeTag = `tag is-success`} else if (character.type === "Agua"){typeTag = `tag is-info`} else {typeTag = `tag is-danger`}
+          if (character.type === "Planta"){typeTag = `tag is-success`} else if (character.type === "Agua"){typeTag = `tag is-info`} else if (character.type === "Fuego") {typeTag = `tag is-danger`} else if (character.type === "Volador") {typeTag = `tag is-link`} else if (character.type === "Piedra") {typeTag = `tag is-warning`} else if (character.type === "Pelea") {typeTag = `tag is-danger`}
           const selectable = character.health > 0 && character !== activeAliado;
           return `<div class="column is-one-third">
             <div class="card personaje-tarjeta ${status.state} has-text-black" style="height: 100%; margin: auto;" data-personaje="${index}" title="${status.tooltip}" aria-label="${character.firstName}: ${status.label}. ${status.tooltip}" aria-disabled="${!selectable}" tabindex="${selectable ? 0 : -1}">
@@ -800,13 +941,13 @@ function mostrarMochila(personaje) {
     manageButtons(mochilaButtons, false);
     manageButtons(personajeButtons, true);
     enviarPersonaje.disabled = true;
-    enviarPersonaje.innerHTML = `<span>✅ Aplicar ${data.name}</span><span class="k">1</span>`;
-    cancelarPersonaje.innerHTML = `<span>↩ Volver a mochila</span><span class="k">2</span>`;
-    document.getElementById("preguntaAccion").textContent = `¿A quién usarás ${data.name}?`;
+    enviarPersonaje.innerHTML = `<span>✅ Aplicar ${data.name}</span>`;
+    cancelarPersonaje.innerHTML = `<span>↩ Volver a mochila</span>`;
+    document.getElementById("preguntaAccion").textContent = `¿Quién recibirá ${data.name}?`;
     personajes.innerHTML = `
       <div class="menuGui-ventana main-gui">
         <header class="menuGui-titulo">
-          <span class="personajes-retratos">${portraits}</span>PERSONAJES
+          <span class="personajes-retratos">${portraits}</span>¿Usar ${data.name}?
         </header>
         <div class="columns m-2" aria-label="Personajes del equipo" style="min-height: 88%; overflow-y: auto;">
           ${equipo.map((target, index) => {
@@ -814,7 +955,7 @@ function mostrarMochila(personaje) {
             const state = target.health <= 0 ? "debilitado" : target === activeAliado ? "combate" : "disponible";
             const label = target.health <= 0 ? "Debilitado" : state === "combate" ? "En combate" : "Disponible";
             const statusTag = state === "disponible" ? "tag is-success" : state === "combate" ? "tag is-warning" : "tag is-danger";
-            const typeTag = target.type === "Planta" ? "tag is-success" : target.type === "Agua" ? "tag is-info" : "tag is-danger";
+            const typeTag = target.type === "Planta" ? "tag is-success" : target.type === "Agua" ? "tag is-info" : target.type === "Pelea" ? "tag is-pelea" : target.type === "Volador" ? "tag is-link" : "tag is-warning";
             return `
               <div class="column is-one-third">
                 <div class="card personaje-tarjeta ${state} has-text-black" style="height: 100%; margin: auto; ${selectable ? "" : "opacity: 0.6; cursor: not-allowed;"}" data-target="${index}" aria-label="${target.firstName}: ${label}" aria-disabled="${!selectable}" tabindex="${selectable ? 0 : -1}">
@@ -848,24 +989,32 @@ function mostrarMochila(personaje) {
       enviarPersonaje.disabled = false;
       document.getElementById("preguntaAccion").textContent = `¿Usar ${data.name} en ${selectedTarget.firstName}?`;
     }));
-    enviarPersonaje.onclick = () => {
-      if (!selectedTarget || !useItem(selectedItem, selectedTarget)) return;
-      const itemMessage = document.getElementById("preguntaAccion").textContent;
+    enviarPersonaje.onclick = async () => {
+      if (!selectedTarget) return;
+      const target = selectedTarget;
+      const item = selectedItem;
       personajes.style.display = "none";
       personajes.className = "";
       personajes.innerHTML = "";
-      enviarPersonaje.innerHTML = `<span>✅ Enviar Gato</span><span class="k">1</span>`;
-      cancelarPersonaje.innerHTML = `<span>❌ Cancelar</span><span class="k">2</span>`;
+      enviarPersonaje.innerHTML = `<span>✅ Enviar Gato</span>`;
+      cancelarPersonaje.innerHTML = `<span>❌ Cancelar</span>`;
       manageButtons(personajeButtons, false);
-      cerrarMochila(itemMessage);
+      cerrarMochila();
+      for (const button of actionButtons) button.disabled = true;
+      const itemUsed = await useItem(item, target);
+      if (!itemUsed) {
+        document.getElementById("preguntaAccion").textContent = "No se pudo usar el objeto.";
+        for (const button of actionButtons) button.disabled = false;
+        return;
+      }
       completePlayerMove();
     };
     cancelarPersonaje.onclick = () => {
       personajes.style.display = "none";
       personajes.className = "";
       personajes.innerHTML = "";
-      enviarPersonaje.innerHTML = `<span>✅ Enviar Gato</span><span class="k">1</span>`;
-      cancelarPersonaje.innerHTML = `<span>❌ Cancelar</span><span class="k">2</span>`;
+      enviarPersonaje.innerHTML = `<span>✅ Enviar Gato</span>`;
+      cancelarPersonaje.innerHTML = `<span>❌ Cancelar</span>`;
       manageButtons(personajeButtons, false);
       mochila.style.display = "block";
       manageButtons(mochilaButtons, true);
@@ -899,7 +1048,7 @@ function completePlayerMove() {
   document.getElementById("turnoActual").textContent = "Equipo Enemigo";
   setTimeout(() => {
     playTurn();
-  }, 3000);
+  }, 3000 * matchDelayMultiplier);
 }
 
 async function playEnemyMove() {
@@ -908,7 +1057,7 @@ async function playEnemyMove() {
     if (gameOver || activeEnemigo.health <= 0) return;
   }
 
-  const enemyTeam = window.equipoEnemigo || [];
+  const enemyTeam = window.equipoEnemigo;
   const inventory = teamInventories.Enemigo;
   const actions = [];
   const availableMoves = activeEnemigo.attacks.filter(move => move.pp > 0);
@@ -968,7 +1117,7 @@ async function playEnemyMove() {
       await attack(activeEnemigo, chosenAction.move, activeAliado);
       if (gameOver || activeAliado.health <= 0) return;
     } else if (chosenAction.type === "heal") {
-      useItem(chosenAction.itemId, activeEnemigo);
+      await useItem(chosenAction.itemId, activeEnemigo);
     } else {
       await animateCharacterSwitch("Enemigo", chosenAction.character);
       document.getElementById("preguntaAccion").textContent = `${activeEnemigo.firstName} entra en combate.`;
@@ -978,7 +1127,7 @@ async function playEnemyMove() {
   setTimeout(() => {
     whoseTurn = "Aliado";
     playTurn();
-  }, 3000);
+  }, 3000 * matchDelayMultiplier);
 }
 
 function playTurn() {
@@ -997,6 +1146,7 @@ function playTurn() {
     msgBox.innerHTML = defaultMsgBox;
     updatePreguntaAccion(activeAliado);
     return;
+
   } else if (whoseTurn === "Enemigo") {//------------------------------------AI ENEMY TURN
     for (const button of actionButtons) {
       button.disabled = true;
@@ -1006,7 +1156,7 @@ function playTurn() {
     document.getElementById("preguntaAccion").textContent = "El enemigo está haciendo su movimiento...";
 
 
-    setTimeout(playEnemyMove, 1000);
+    setTimeout(playEnemyMove, 1000 * matchDelayMultiplier);
     return;
   }
 
@@ -1024,7 +1174,34 @@ async function setGame() {
   const aliado = await generateTeam("Aliado");
   const enemigo = await generateTeam("Enemigo");
   window.equipoAliado = aliado;
+  console.log(window.equipoAliado)
   window.equipoEnemigo = enemigo;
+  console.log(window.equipoEnemigo)
+
+  mainScreen()
+  
+  document.getElementById(`startGame`).addEventListener("click", async () => {
+    const startButton = document.getElementById("startGame");
+    startButton.disabled = true;
+    await Promise.all([
+      preloadPortrait(activeAliado.portrait),
+      preloadPortrait(activeEnemigo.portrait)
+    ]);
+
+    document.getElementById(`mainMenu`).style.display = "none";
+    document.getElementById(`arena`).style.display = "";
+    document.getElementById(`menuAcciones`).style.display = "";
+
+    actionButtons.forEach(button => button.disabled = true);
+    await Promise.all([
+      runAttackAnimation(document.getElementById("canvasAliado"), "entrada-aliado"),
+      runAttackAnimation(document.getElementById("canvasEnemigo"), "entrada-enemigo"),
+      runAttackAnimation(document.getElementById("tarjetaAliado"), "entrada-aliado"),
+      runAttackAnimation(document.getElementById("tarjetaEnemigo"), "entrada-enemigo")
+    ]);
+    playTurn();
+  });
+
   teamInventories.Aliado = generateInventory();
   teamInventories.Enemigo = generateInventory();
 
@@ -1036,7 +1213,7 @@ async function setGame() {
   document.getElementById("turnoActual").textContent = "Equipo Aliado";
   updatePreguntaAccion(activeAliado);
 
-  updateHud(1, climate);
+  updateHud(climate);
   loadPlayerData(activeAliado, "Aliado");
   loadPlayerData(activeEnemigo, "Enemigo");
 
@@ -1048,14 +1225,20 @@ async function setGame() {
             Normal: "button",
             Fuego: "button is-danger",
             Agua: "button is-info",
-            Planta: "button is-success"
-          }[attackMove.type] || "button";
+            Planta: "button is-success",
+            Pelea: "button is-danger",
+            Volador: "button is-link",
+            Piedra: "button is-warning"
+          }[attackMove.type];
           const icon = {
             Normal: "👊",
             Fuego: "🔥",
             Agua: "💧",
-            Planta: "🌿"
-          }[attackMove.type] || "👊";
+            Planta: "🌿",
+            Pelea: "🤜",
+            Volador: "💨",
+            Piedra: "🪨"
+          }[attackMove.type];
 
           return `
             <button class="${buttonClass} is-dark" id="botonAtaque${index}" ${activeAliado.attacks[index].pp <= 0 ? "disabled" : ""}>
@@ -1089,6 +1272,12 @@ async function setGame() {
 
   actionButtons.forEach(button => button.disabled = true);
 playTurn();
+
+  const loadingScreen = document.getElementById("loadingScreen");
+  loadingScreen.addEventListener("animationend", () => {
+    loadingScreen.style.display = "none";
+  }, { once: true });
+  loadingScreen.classList.add("is-fading");
 }
 
 setGame();

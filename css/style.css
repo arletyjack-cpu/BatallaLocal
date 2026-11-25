@@ -32,6 +32,21 @@ body {
   min-width: 0;
 }
 
+@font-face {
+  font-family: 'GothikSteel';
+  src: url('../resources/GothikSteel.ttf') format('truetype');
+  font-weight: lighter;
+  font-style: normal;
+  font-display: swap;
+}
+
+.title {
+  font-family: 'GothikSteel', sans-serif;
+  font-size: 8rem;
+  color: #45bd74;
+  -webkit-text-stroke: #000000;
+  -webkit-text-stroke-width: 0.01svb;
+}
 
 /* =================================
    HEADER
@@ -67,6 +82,131 @@ body {
 }
 
 /* =================================
+   MAIN MENU
+================================= */
+
+.splashScreen {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#loadingScreen.is-fading {
+  animation: loadingScreenFadeOut 700ms ease forwards;
+  pointer-events: none;
+}
+
+@keyframes loadingScreenFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.main-menu {
+  position: relative;
+  aspect-ratio: 16 / 12.3;
+
+  overflow: hidden;
+
+  border: 4px solid #344365;
+  border-radius: 20px;
+}
+
+.main-title {
+  position: absolute;
+
+  height: 390px;
+  width: 1382px;
+
+  transform: scale(0.9) translate(0%, 10%);
+  z-index: 0;
+  inset: 0;
+  z-index: 3;
+}
+
+.blurred {
+  overflow: hidden;
+  filter: blur(15px) sepia(0.3) grayscale(0.3);
+  z-index: -1;
+}
+
+#Aliados {
+  position: absolute;
+  transform: translate(60%, 10%);
+  z-index: 2;
+}
+
+#Enemigos {
+  position: absolute;
+  transform: translate(258%, 10%);
+  z-index: 2;
+}
+
+.personajes-retratos-main-screen {
+  display: flex;
+  align-items: center;
+  
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 3px solid black;
+  border-radius: 50%;
+  background: #465566;
+  overflow: hidden;
+
+  object-fit: cover;
+}
+
+.personajes-retratos-main-screen img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+#firstPortrait {
+  position: sticky;
+  top: 35%;
+  transform-origin: center;
+  transform: scale(1.33);
+}
+
+#secondPortrait {
+  position: sticky;
+  left: 35%;
+  transform-origin: center;
+  transform: scale(1.33) translate(35%);
+}
+
+#secondPortraitPartTwo {
+  position: sticky;
+  right: 35%;
+  transform-origin: center;
+  transform: scale(1.33) translate(-35%);
+}
+
+#thirdPortrait {
+  position: sticky;
+  bottom: 15%;
+  transform-origin: center;
+  transform: scale(1.33);
+}
+
+#middleButtons {
+  position: absolute;
+  transform-origin: center;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  height: 25%;
+}
+
+/* =================================
    BATTLE ARENA
 ================================= */
 
@@ -78,7 +218,7 @@ body {
   position: absolute;
   z-index: 0;
   inset: 0;
-  background: url("../images/arena.webp") center / cover no-repeat;
+  background: url("../resources/arena.webp") center / cover no-repeat;
 }
 
 .arena-background.clima-soleado {
@@ -123,38 +263,53 @@ body {
   height: clamp(16px, 2.5vw, 19px);
 }
 
+.health-bar::before {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #111827;
+  border-radius: 20px;
+  background: #d1d5db;
+  content: "";
+}
+
 .health-bar .progress {
   position: absolute;
   inset: 0;
-
   width: 100%;
   height: 100%;
   margin: 0;
-
-  border: 2px solid #111827;
-  border-radius: 20px;
-
-  background: #d1d5db;
-  appearance: none;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.health-bar .progress::-webkit-progress-bar {
-  background: #d1d5db;
+.health-bar-fill {
+  position: absolute;
+  z-index: 1;
+  inset: 2px;
   border-radius: 20px;
-}
-
-.health-bar .progress::-webkit-progress-value {
   background: linear-gradient(90deg, #e44843, #f3d34a, #45bd74);
-  border-radius: 20px;
+  transform: scaleX(var(--health-ratio, 1));
+  transform-origin: left center;
+  transition: transform 650ms ease-out, filter 180ms ease-out;
 }
 
-.health-bar .progress::-moz-progress-bar {
-  background: linear-gradient(90deg, #e44843, #f3d34a, #45bd74);
-  border-radius: 20px;
+.health-bar.taking-damage {
+  animation: healthBarDamage 450ms ease-out;
+}
+
+.health-bar.taking-damage .health-bar-fill {
+  filter: brightness(1.7);
+}
+
+@keyframes healthBarDamage {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-3px); }
+  40%, 80% { transform: translateX(3px); }
 }
 
 .health-label {
   position: absolute;
+  z-index: 2;
   inset: 0;
 
   display: flex;
@@ -258,6 +413,7 @@ body {
   max-height: 100%;
 
   border-radius: 200px;
+  border: 6px solid #000000;
   transform-origin: center;
 }
 
@@ -308,6 +464,7 @@ body {
   max-height: 100%;
 
   border-radius: 200px;
+  border: 6px solid #000000;
   transform-origin: center;
 }
 
@@ -345,6 +502,144 @@ body {
   color: #111827;
 
   box-shadow: none;
+}
+
+.character-card.jugador.entrada-aliado {
+  animation: entradaTarjetaAliado 600ms ease-out both;
+}
+
+@keyframes entradaTarjetaAliado {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(0); }
+}
+
+.character-card.enemigo.entrada-enemigo {
+  animation: entradaTarjetaEnemigo 600ms ease-out both;
+}
+
+@keyframes entradaTarjetaEnemigo {
+  from { transform: translateX(120%); }
+  to { transform: translateX(0); }
+}
+
+.player-cat.endgame-exit-left,
+.character-card.jugador.endgame-exit-left {
+  animation: endgameExitLeft 600ms ease-in forwards;
+}
+
+.enemy-cat.endgame-exit-right,
+.character-card.enemigo.endgame-exit-right {
+  animation: endgameExitRight 600ms ease-in forwards;
+}
+
+@keyframes endgameExitLeft {
+  to { transform: translateX(-120%); }
+}
+
+@keyframes endgameExitRight {
+  to { transform: translateX(120%); }
+}
+
+.endgame-screen {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+  overflow: hidden;
+}
+
+.endgame-screen .main-title {
+  inset: auto;
+  left: 40%;
+  width: min(90%, 900px);
+  height: auto;
+  transform-origin: center;
+  transform: scale(0.7) translate(-50%, -15%);
+}
+
+.endgame-screen #Aliados,
+.endgame-screen #Enemigos {
+  position: absolute;
+  top: 26%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 30%;
+  justify-content: center;
+  gap: 0;
+  transform: scale(2);
+}
+
+.endgame-screen #Aliados {
+  left: 2%;
+}
+
+.endgame-screen #Enemigos {
+  right: 2%;
+}
+
+.endgame-screen #firstPortrait,
+.endgame-screen #secondPortrait,
+.endgame-screen #secondPortraitPartTwo,
+.endgame-screen #thirdPortrait {
+  position: relative;
+  inset: auto;
+  width: clamp(64px, 11vw, 140px);
+  height: clamp(64px, 11vw, 140px);
+  flex: none;
+  transform: none;
+}
+
+.endgame-screen .personajes-retratos-main-screen + .personajes-retratos-main-screen {
+  margin-top: -18px;
+}
+
+.endgame-screen .main-title.endgame-main-title-enter {
+  animation: endgameMainTitleEnter 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes endgameMainTitleEnter {
+  from {
+    opacity: 0;
+    translate: 0 -120vh;
+  }
+  to {
+    opacity: 1;
+    translate: 0 20vh;
+  }
+}
+
+.endgame-screen #Aliados .personajes-retratos-main-screen.endgame-portrait-ally-enter,
+.endgame-screen #Enemigos .personajes-retratos-main-screen.endgame-portrait-enemy-enter {
+  animation: endgamePortraitEnter 600ms ease-out both;
+}
+
+.endgame-screen #Aliados .personajes-retratos-main-screen.endgame-portrait-ally-enter {
+  --portrait-entry-x: -120vw;
+}
+
+.endgame-screen #Enemigos .personajes-retratos-main-screen.endgame-portrait-enemy-enter {
+  --portrait-entry-x: 120vw;
+}
+
+.endgame-screen #Aliados .personajes-retratos-main-screen.endgame-portrait-ally-enter:nth-child(2),
+.endgame-screen #Enemigos .personajes-retratos-main-screen.endgame-portrait-enemy-enter:nth-child(2) {
+  animation-delay: 100ms;
+}
+
+.endgame-screen #Aliados .personajes-retratos-main-screen.endgame-portrait-ally-enter:nth-child(3),
+.endgame-screen #Enemigos .personajes-retratos-main-screen.endgame-portrait-enemy-enter:nth-child(3) {
+  animation-delay: 200ms;
+}
+
+@keyframes endgamePortraitEnter {
+  from {
+    opacity: 0;
+    translate: var(--portrait-entry-x) 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
 
 .character-card .card-content {
@@ -419,8 +714,8 @@ body {
 
 .msg {
   height: 100%;
-  min-height: 130px;
-  max-height: 130px;
+  min-height: 175px;
+  max-height: 175px;
 
   margin: 0 !important;
   padding: 12px;
@@ -433,6 +728,30 @@ body {
   background: #f5f7fb;
 
   box-shadow: none;
+}
+
+@keyframes endgameTitleEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-150%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.life.endgame-exit-up,
+.round.endgame-exit-up {
+  animation: endgameExitUp 600ms ease-in forwards;
+}
+
+@keyframes endgameExitUp {
+  to { transform: translateY(-180%); }
+}
+
+.endgame-loser {
+  filter: grayscale(1);
 }
 
 #preguntaAccion {
@@ -1100,7 +1419,6 @@ body {
 }
 
 #enviarPersonaje {
-  color: #17212b;
   background: #ffe08a;
 }
 

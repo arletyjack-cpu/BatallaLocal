@@ -9,11 +9,37 @@
 </head>
 <body>
 <main class="game has-text-black" id="juego">
-  <!-- HEADER -->
-  <header class="top is-flex is-justify-content-space-between is-align-items-center" id="encabezado">
-    <span class="title is-4 has-text-white mb-0">Batalla local</span>
-    <button class="button pause" id="botonPausa" aria-label="Pausa">❚❚</button>
-  </header>
+
+  <!-- MAIN MENU -->
+  <section class="main-menu" id="mainMenu">
+    <div class="arena-background blurred"></div>
+    <section class="section is-medium">
+      <img class="main-title" src="resources/MainTitle.webp"></img>
+    </section>
+    <div class="columns is-one-third">
+      <div class="column is-one-third">
+        <span id="Aliados">
+          <span><img class="personajes-retratos-main-screen" id="firstPortrait" src="resources/placeholder.webp" alt="Retrato de ${character.firstName}"></span>
+          <span><img class="personajes-retratos-main-screen" id="secondPortrait" src="resources/placeholder.webp" alt="Retrato de ${character.firstName}"></span>
+          <span><img class="personajes-retratos-main-screen" id="thirdPortrait" src="resources/placeholder.webp" alt="Retrato de ${character.firstName}"></span>
+        </span>
+      </div>
+      <div class="column is-one-third" id="middleButtons">
+        <div class="btns grid-2 has-text-centered">
+          <button class="button b is-large" id="startGame" style="background-color: #f9ce36; color: #141b2d; border: 4px solid #000000;"><span class="mx-auto is-size-3">Empezar Partida</span></button>
+          <button onclick="window.close()" class="button b is-large" id="quitGame" style="background-color: #f9ce36; color: #141b2d; border: 4px solid #000000;"><span class="mx-auto is-size-3">Salir</span></button>
+        </div>
+      </div>
+      <div class="column is-one-third">
+        <span id="Enemigos">
+          <span><img class="personajes-retratos-main-screen" id="firstPortrait" src="resources/placeholder.webp" alt="Retrato de ${character.firstName}"></span>
+          <span><img class="personajes-retratos-main-screen" id="secondPortraitPartTwo" src="resources/placeholder.webp" alt="Retrato de ${character.firstName}"></span>
+          <span><img class="personajes-retratos-main-screen" id="thirdPortrait" src="resources/placeholder.webp" alt="Retrato de ${character.firstName}"></span>
+        </span>
+      </div>
+    </div>
+    <img class="splashScreen" id="loadingScreen" src="resources/SplashScreen.webp" alt="Cargando...">
+  </section>
 
   <!-- PERSONAJES -->
   <section class="menuGui" id="personajes" style="display: none;"></section>
@@ -22,7 +48,7 @@
   <section class="menuGui" id="mochila" style="display: none;"></section>
 
   <!-- BATTLE ARENA -->
-  <section class="arena main-gui" id="arena">
+  <section class="arena main-gui" id="arena" style="display: none">
     <div class="arena-background" id="arenaBackground" aria-hidden="true"></div>
 
     <!-- BATTLE HUD -->
@@ -31,7 +57,8 @@
       <!-- PLAYER 1 -->
       <div class="life life-player1" id="estadoAliado">
         <div class="health-bar">
-          <progress class="progress is-success" id="barraVidaAliado" value="67" max="67"></progress>
+          <progress class="progress is-success" id="barraVidaAliado" value="67" max="67" aria-label="Vida del aliado"></progress>
+          <span class="health-bar-fill" aria-hidden="true"></span>
           <div class="health-label">
             <span>Vida</span><span id="vidaAliado">--</span>
           </div>
@@ -41,15 +68,15 @@
 
       <!-- ROUND -->
       <div class="round has-text-centered" id="ronda">
-        <span class="is-size-6" id="clima">Soleado</span>
-        <span class="has-text-weight-bold" id="numeroRonda">Ronda 67</span>
-        <small id="ventajaElemental">Todo x67</small>
+        <span class="has-text-weight-bold" id="clima">Dia Templado</span>
+        <small id="ventajaElemental" style="max-width: 180px;">Todo x67</small>
       </div>
 
       <!-- PLAYER 2 -->
       <div class="life life-player2" id="estadoEnemigo">
         <div class="health-bar">
-          <progress class="progress is-success" id="barraVidaEnemigo" value="67" max="67"></progress>
+          <progress class="progress is-success" id="barraVidaEnemigo" value="67" max="67" aria-label="Vida del enemigo"></progress>
+          <span class="health-bar-fill" aria-hidden="true"></span>
           <div class="health-label">
             <span>Vida</span><span id="vidaEnemigo">--</span>
           </div>
@@ -62,8 +89,8 @@
 
     <!-- PLAYER CARD -->
     <div class="player-cat" id="canvasAliado">
-      <img class="player-image" id="imagenAliado" src="images/placeholder.webp" alt="Aliado">
-      <img class="player-overlay" id="overlayAliado" src="images/Halo.webp" alt="Halo">
+      <img class="player-image" id="imagenAliado" src="resources/placeholder.webp" alt="Aliado">
+      <img class="player-overlay" id="overlayAliado" src="resources/Halo.webp" alt="Halo">
     </div>
 
     <article class="card character-card jugador" id="tarjetaAliado">
@@ -84,8 +111,8 @@
 
     <!-- ENEMY CARD -->
     <div class="enemy-cat" id="canvasEnemigo">
-      <img class="enemy-image" id="imagenEnemigo" src="images/placeholder.webp" alt="Enemigo">
-      <img class="enemy-overlay" id="overlayEnemigo" src="images/Horns.webp" alt="Horns">
+      <img class="enemy-image" id="imagenEnemigo" src="resources/placeholder.webp" alt="Enemigo">
+      <img class="enemy-overlay" id="overlayEnemigo" src="resources/Horns.webp" alt="Horns">
     </div>
     <article class="card character-card enemigo" id="tarjetaEnemigo">
       <div class="card-content">
@@ -106,7 +133,7 @@
   </section>
 
   <!-- ACTION MENU -->
-  <section class="menu" id="menuAcciones">
+  <section class="menu" id="menuAcciones" style="display: none">
     <div class="columns is-mobile is-variable is-1 action-layout">
       <!-- MESSAGE -->
       <div class="column is-7" id="textColumn">
@@ -118,18 +145,21 @@
       </div>
 
       <!-- BUTTON GRID -->
-      <div class="column is-5" id="buttonColumn" style="max-height: 130px;">
+      <div class="column is-5" id="buttonColumn" style="max-height: 175px;">
         <div class="btns grid-4" id="botonesAccion">
-          <button class="button b" id="botonPelear" style="background-color: #ad2222;"><span>⚔ Pelear</span><span class="k">1</span></button>
-          <button class="button b" id="botonPersonajes" style="background-color: #16b646;"><span>👥 Personajes</span><span class="k">2</span></button>
-          <button class="button b" id="botonMochila" style="background-color: #b69d10;"><span>🎒 Mochila</span><span class="k">3</span></button>
-          <button class="button b" id="botonHuir" style="background-color: #1553af;"><span>🏃 Huir</span><span class="k">4</span></button>
+          <button class="button b" id="botonPelear" style="background-color: #ad2222;"><span>⚔ Pelear</span></button>
+          <button class="button b" id="botonPersonajes" style="background-color: #16b646;"><span>👥 Personajes</span></button>
+          <button class="button b" id="botonMochila" style="background-color: #b69d10;"><span>🎒 Mochila</span></button>
+          <button class="button b" id="botonHuir" style="background-color: #1553af;"><span>🏃 Huir</span></button>
 
-          <button class="button b pelear" id="botonElegirPersonaje" style="display: none; background-color: #16b646;"><span>✅ Aplicar</span><span class="k">1</span></button>
-          <button class="button b pers" id="botonCancelarMochila" style="display: none; background-color: #ad2222;"><span>❌ Cancelar</span><span class="k">2</span></button>
+          <button class="button b" id="botonElegirPersonaje" style="display: none; background-color: #16b646;"><span>✅ Aplicar</span></button>
+          <button class="button b" id="botonCancelarMochila" style="display: none; background-color: #ad2222;"><span>❌ Cancelar</span></button>
 
-          <button class="button b pelear" id="enviarPersonaje" style="display: none; background-color: #16b646;"><span>✅ Enviar Gato</span><span class="k">1</span></button>
-          <button class="button b pers" id="cancelarPersonaje" style="display: none; background-color: #ad2222;"><span>❌ Cancelar</span><span class="k">2</span></button>
+          <button class="button b" id="enviarPersonaje" style="display: none; background-color: #16b646;"><span>✅ Enviar Gato</span></button>
+          <button class="button b" id="cancelarPersonaje" style="display: none; background-color: #ad2222;"><span>❌ Cancelar</span></button>
+
+          <button onclick="window.location.reload()" class="button b" id="reiniciar" style="display: none; background-color: #1470da;"><span>🔄 Jugar Otra vez</span></button>
+          <button onclick="window.close()" class="button b" id="salir" style="display: none; background-color: #ad2222;"><span>❌ Salir del juego</span></button>
         </div>
       </div>
     </div>
