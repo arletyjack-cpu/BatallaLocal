@@ -41,7 +41,7 @@ const typeEffectiveness = {
   Normal: { Fuego: 1, Planta: 1, Agua: 1, Pelea: 1, Volador: 1, Piedra: 1, Normal: 1 }
 };
 
-const emojiTypes = { Normal: "✊", Planta: "🍃", Fuego: "🔥", Agua: "💦", Pelea : "🤜", Volador : "💨", Piedra : "🪨", Healing : "💊" };
+const emojiTypes = { Normal: "✊", Planta: "🍃", Fuego: "🔥", Agua: "💦", Pelea : "🤜", Volador : "💨", Piedra : "🌑", Healing : "💊" };
 const typedAttackMoves = {
   Fuego: [
     { name: "Llamarada", type: "Fuego", accuracy: 95, category: "ranged", pp: 8, multiplier: 2.5 },
@@ -514,7 +514,7 @@ async function endGame(message) {
   btnsAccion.classList.replace("grid-4", "grid-2");
   manageButtons(endgameButtons, true);
 
-  endgameButtons.forEach(button => button.disabled = false);;
+  endgameButtons.forEach(button => button.disabled = false);
 
   document.getElementById("preguntaAccion").textContent = `${message}`;
 
